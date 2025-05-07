@@ -23,9 +23,14 @@ public final class SentienceEntity extends JavaPlugin {
 
     private SkinFetcher skinFetcher;
 
+    private NPCsHandler npcshandler;
+
     private HologramManager hologramManager;
 
-    private NPCsHandler npcshandler;
+    //TODO: TabComplete for Command
+    //TODO: NPCClickEvent
+    //TODO: Fixing that existing lines from the hologram update their position after removal of one line
+    //TODO: Command -> listnpcs
 
     @Override
     public void onLoad() {
@@ -40,8 +45,8 @@ public final class SentienceEntity extends JavaPlugin {
         PacketEvents.getAPI().init();
 
         this.skinFetcher = new SkinFetcher(this);
-        this.hologramManager = new HologramManager();
         this.npcshandler = new NPCsHandler();
+        this.hologramManager = new HologramManager();
         this.getLogger().info("Loaded " + this.npcshandler.getLoadedSize() + " NPCs.");
 
         Bukkit.getPluginManager().registerEvents(new NPCSpawnListener(), this);

@@ -10,6 +10,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDe
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
+import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -26,8 +27,7 @@ public class SentienceHologram {
     private final UUID uuid;
 
     private final Location baseLocation;
-    private final List<Integer> lines;
-    private final List<String> textLines;
+    private final Map<Integer, HologramLine> hologramLines;
 
     @Setter
     private Location location;
@@ -39,31 +39,139 @@ public class SentienceHologram {
         this.uuid = uuid;
         this.baseLocation = baseLocation;
 
-        this.lines = new ArrayList<>();
-        this.textLines = new ArrayList<>();
+        this.hologramLines = new HashMap<>();
+        this.location = baseLocation.clone();
     }
 
     public void addLine(String line) {
-        this.textLines.add(line);
+        int lineIndex = hologramLines.size();
+        int lineEntityId = SpigotReflectionUtil.generateEntityId();
+        Location lineLocation = this.baseLocation.clone();
+        lineLocation.setPosition(new Vector3d(
+                this.baseLocation.getX(),
+                this.baseLocation.getY() + 1.8 - (LINE_HEIGHT * (lineIndex + 1)),
+                this.baseLocation.getZ()
+        ));
 
-        this.moveExistingLinesUp();
+        HologramLine hologramLine = new HologramLine(lineEntityId, this.uuid, line, lineLocation);
+        hologramLines.put(lineIndex, hologramLine);
 
-
+        spawnLine(hologramLine);
+        moveExistingLinesUp();
     }
 
-    private void moveExistingLinesUp() {
-        for (int entityId : lines) {
-            Location newLocation = this.baseLocation.clone();
-            newLocation.setPosition(new Vector3d(this.baseLocation.getX(), this.baseLocation.getY() + this.LINE_HEIGHT, this.baseLocation.getZ()));
+    private void spawnLine(HologramLine line) {
+        Location location = line.getLocation();
+        WrapperPlayServerSpawnEntity spawnPacket = new WrapperPlayServerSpawnEntity(
+                line.getEntityId(),
+                UUID.randomUUID(),
+                EntityTypes.ARMOR_STAND,
+                location,
+                location.getYaw(),
+                0,
+                null
+        );
+
+        List<EntityData> data = List.of(
+                new EntityData(0, EntityDataTypes.BYTE, (byte) 0x20),
+                new EntityData(2, EntityDataTypes.OPTIONAL_ADV_COMPONENT, Optional.of(miniMessage.deserialize(line.getText()))),
+                new EntityData(3, EntityDataTypes.BOOLEAN, true),
+                new EntityData(5, EntityDataTypes.BOOLEAN, true),
+                new EntityData(15, EntityDataTypes.BYTE, (byte) 0x19)
+        );
+
+        WrapperPlayServerEntityMetadata metaPacket = new WrapperPlayServerEntityMetadata(line.getEntityId(), data);
+
+        for (Object channel : channels) {
+            PacketEvents.getAPI().getProtocolManager().sendPacket(channel, spawnPacket);
+            PacketEvents.getAPI().getProtocolManager().sendPacket(channel, metaPacket);
+        }
+    }
+
+    public void removeLine(int index) {
+        if (!hologramLines.containsKey(index)) return;
+
+        HologramLine line = hologramLines.remove(index);
+        if (line == null) return;
+
+        WrapperPlayServerDestroyEntities destroyPacket = new WrapperPlayServerDestroyEntities(line.getEntityId());
+        for (Object channel : channels) {
+            PacketEvents.getAPI().getProtocolManager().sendPacket(channel, destroyPacket);
+        }
+
+        updateLinesAfterRemoval();
+    }
+
+    private void updateLinesAfterRemoval() {
+        List<Map.Entry<Integer, HologramLine>> linesList = new ArrayList<>(hologramLines.entrySet());
+
+        for (int newIndex = 0; newIndex < linesList.size(); newIndex++) {
+            Map.Entry<Integer, HologramLine> entry = linesList.get(newIndex);
+            HologramLine line = entry.getValue();
+
+            Location newLocation = baseLocation.clone();
+            newLocation.setPosition(new Vector3d(
+                    baseLocation.getX(),
+                    baseLocation.getY() + 1.8 + (LINE_HEIGHT * (linesList.size() - newIndex - 1)),
+                    baseLocation.getZ()
+            ));
+
+            line.setLocation(newLocation);
+
             WrapperPlayServerEntityTeleport teleport = new WrapperPlayServerEntityTeleport(
-                    entityId,
+                    line.getEntityId(),
                     newLocation,
                     true
             );
 
             for (Object channel : channels) {
-                PacketEvents.getAPI().getProtocolManager().sendPacket(teleport, channel);
+                PacketEvents.getAPI().getProtocolManager().sendPacket(channel, teleport);
             }
+
+            hologramLines.put(newIndex, line);
+        }
+    }
+
+    private void moveExistingLinesUp() {
+        List<HologramLine> linesList = new ArrayList<>(hologramLines.values());
+        for (int i = 0; i < linesList.size(); i++) {
+            HologramLine line = linesList.get(i);
+
+            Location newLocation = baseLocation.clone();
+            newLocation.setPosition(new Vector3d(
+                    baseLocation.getX(),
+                    baseLocation.getY() + 1.8 + (LINE_HEIGHT * (linesList.size() - i - 1)),
+                    baseLocation.getZ()
+            ));
+
+            line.setLocation(newLocation);
+
+            WrapperPlayServerEntityTeleport teleport = new WrapperPlayServerEntityTeleport(
+                    line.getEntityId(),
+                    newLocation,
+                    true
+            );
+
+            for (Object channel : channels) {
+                PacketEvents.getAPI().getProtocolManager().sendPacket(channel, teleport);
+            }
+        }
+    }
+
+    public void updateLine(int index, String newText) {
+        if (!hologramLines.containsKey(index)) return;
+
+        HologramLine line = hologramLines.get(index);
+        if (line == null) return;
+
+        line.setText(newText);
+        List<EntityData> data = List.of(
+                new EntityData(2, EntityDataTypes.OPTIONAL_ADV_COMPONENT, Optional.of(miniMessage.deserialize(newText)))
+        );
+
+        WrapperPlayServerEntityMetadata metaPacket = new WrapperPlayServerEntityMetadata(line.getEntityId(), data);
+        for (Object channel : channels) {
+            PacketEvents.getAPI().getProtocolManager().sendPacket(channel, metaPacket);
         }
     }
 
@@ -72,40 +180,22 @@ public class SentienceHologram {
         Object channel = PacketEvents.getAPI().getPlayerManager().getChannel(player);
         if (channel == null) return;
 
-        WrapperPlayServerSpawnEntity spawnEntityPacket = new WrapperPlayServerSpawnEntity(
-                this.getEntityId(),
-                this.getUuid(),
-                EntityTypes.ARMOR_STAND,
-                this.getLocation(),
-                this.getLocation().getYaw(),
-                0,
-                null
-        );
+        channels.add(channel);
 
-        PacketEvents.getAPI().getProtocolManager().sendPacket(channel, spawnEntityPacket);
-
-        List<EntityData> entityDataList = List.of(
-                new EntityData(2, EntityDataTypes.OPTIONAL_ADV_COMPONENT, MiniMessage.miniMessage().deserialize("<green>nigga")),
-                new EntityData(3, EntityDataTypes.BOOLEAN, true),
-                new EntityData(5, EntityDataTypes.BOOLEAN, true),
-                new EntityData(15, EntityDataTypes.BYTE, (byte) 0x19)
-        );
-
-        WrapperPlayServerEntityMetadata metadataPacket = new WrapperPlayServerEntityMetadata(
-                this.getEntityId(),
-                entityDataList
-        );
-
-        PacketEvents.getAPI().getProtocolManager().sendPacket(channel, metadataPacket);
+        for (HologramLine line : hologramLines.values()) {
+            spawnLine(line);
+        }
     }
 
     public void destroy() {
-        WrapperPlayServerDestroyEntities destroyEntitiesPacket = new WrapperPlayServerDestroyEntities(
-                this.getEntityId()
-        );
-        for (Object channel : channels) {
-            PacketEvents.getAPI().getProtocolManager().sendPacket(destroyEntitiesPacket, channel);
+        for (HologramLine line : hologramLines.values()) {
+            WrapperPlayServerDestroyEntities destroy = new WrapperPlayServerDestroyEntities(line.getEntityId());
+            for (Object channel : channels) {
+                PacketEvents.getAPI().getProtocolManager().sendPacket(channel, destroy);
+            }
         }
+        channels.clear();
+        hologramLines.clear();
     }
 
     public boolean hasSpawned(Player player) {
