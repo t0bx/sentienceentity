@@ -27,13 +27,11 @@ public class NPCsHandler {
     private JsonDocument jsonDocument;
     private final SkinFetcher skinFetcher;
     private final File file;
-    private final HologramManager hologramManager;
 
     public NPCsHandler() {
         this.npcCache = new HashMap<>();
         this.skinFetcher = SentienceEntity.getInstance().getSkinFetcher();
         this.file = new File(SentienceEntity.getInstance().getDataFolder(), "npcs.json");
-        this.hologramManager = SentienceEntity.getInstance().getHologramManager();
         this.loadNPCsFromFile();
     }
 
@@ -48,7 +46,6 @@ public class NPCsHandler {
 
             SentienceNPC npc = new SentienceNPC(SpigotReflectionUtil.generateEntityId(), userProfile);
             npc.setLocation(SentienceLocation.fromBukkitLocation(location));
-            this.hologramManager.createHologram(npcName, location, List.of("<green>First Line", "<red>Second Line"));
 
             this.npcCache.put(npcName, npc);
             this.saveNPCtoFile(npcName, location, skinValue, skinSignature);
@@ -73,6 +70,10 @@ public class NPCsHandler {
         } catch (IOException exception) {
             exception.printStackTrace();
         }
+    }
+
+    public List<String> getNPCNames() {
+        return new ArrayList<>(this.npcCache.keySet());
     }
 
     public int getLoadedSize() {
@@ -102,8 +103,6 @@ public class NPCsHandler {
             if (Bukkit.getWorld(worldName) == null) continue;
 
             Location location = new Location(Bukkit.getWorld(worldName), x, y, z, yaw, pitch);
-            //List<String> lines = this.hologramManager.loadLinesFromFile(npcName);
-            //this.hologramManager.createHologram(npcName, location, lines);
 
             String skinValue = data.get("skin-value").getAsString();
             String skinSignature = data.get("skin-signature").getAsString();
