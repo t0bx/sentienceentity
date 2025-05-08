@@ -5,7 +5,6 @@ import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import de.t0bx.sentienceEntity.commands.SentienceEntityCommand;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.listener.NPCSpawnListener;
-import de.t0bx.sentienceEntity.listener.PlayerClickNPCListener;
 import de.t0bx.sentienceEntity.listener.PlayerMoveListener;
 import de.t0bx.sentienceEntity.listener.PlayerToggleSneakListener;
 import de.t0bx.sentienceEntity.npc.NPCsHandler;
@@ -51,7 +50,6 @@ public final class SentienceEntity extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new NPCSpawnListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerMoveListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerToggleSneakListener(), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerClickNPCListener(), this);
         this.getCommand("se").setExecutor(new SentienceEntityCommand(this));
 
         this.getLogger().info("SentienceEntity has been enabled!");
