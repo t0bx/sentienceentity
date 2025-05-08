@@ -79,7 +79,7 @@ public class JsonDocument {
         return jsonObject.keySet();
     }
 
-    public boolean update(String path, Object value) {
+    public void update(String path, Object value) {
         try {
             String[] pathParts = path.split("\\.");
             JsonElement current = jsonObject;
@@ -94,7 +94,7 @@ public class JsonDocument {
 
                     current = currentObj.get(part);
                 } else {
-                    return false;
+                    return;
                 }
             }
 
@@ -109,13 +109,10 @@ public class JsonDocument {
                     default -> parentObj.add(lastPart, gson.toJsonTree(value));
                 }
 
-                return true;
             }
 
-            return false;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
     }
 

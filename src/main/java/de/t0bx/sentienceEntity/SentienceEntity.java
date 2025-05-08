@@ -1,12 +1,15 @@
 package de.t0bx.sentienceEntity;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import de.t0bx.sentienceEntity.commands.SentienceEntityCommand;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.listener.NPCSpawnListener;
+import de.t0bx.sentienceEntity.listener.PlayerClickNPCListener;
 import de.t0bx.sentienceEntity.listener.PlayerMoveListener;
 import de.t0bx.sentienceEntity.listener.PlayerToggleSneakListener;
 import de.t0bx.sentienceEntity.npc.NPCsHandler;
+import de.t0bx.sentienceEntity.packetlistener.PacketReceiveListener;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
@@ -27,11 +30,6 @@ public final class SentienceEntity extends JavaPlugin {
 
     private HologramManager hologramManager;
 
-    //TODO: TabComplete for Command
-    //TODO: NPCClickEvent
-    //TODO: Fixing that existing lines from the hologram update their position after removal of one line
-    //TODO: Command -> listnpcs
-
     @Override
     public void onLoad() {
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
@@ -47,12 +45,14 @@ public final class SentienceEntity extends JavaPlugin {
         this.skinFetcher = new SkinFetcher(this);
         this.npcshandler = new NPCsHandler();
         this.hologramManager = new HologramManager();
+        PacketEvents.getAPI().getEventManager().registerListener(new PacketReceiveListener(this.npcshandler), PacketListenerPriority.NORMAL);
         this.getLogger().info("Loaded " + this.npcshandler.getLoadedSize() + " NPCs.");
 
         Bukkit.getPluginManager().registerEvents(new NPCSpawnListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerMoveListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerToggleSneakListener(), this);
-        this.getCommand("se").setExecutor(new SentienceEntityCommand());
+        Bukkit.getPluginManager().registerEvents(new PlayerClickNPCListener(), this);
+        this.getCommand("se").setExecutor(new SentienceEntityCommand(this));
 
         this.getLogger().info("SentienceEntity has been enabled!");
     }

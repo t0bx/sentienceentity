@@ -1,17 +1,15 @@
 package de.t0bx.sentienceEntity.npc;
 
-import com.github.retrooper.packetevents.protocol.npc.NPC;
 import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import de.t0bx.sentienceEntity.SentienceEntity;
-import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.utils.JsonDocument;
 import de.t0bx.sentienceEntity.utils.SentienceLocation;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -24,12 +22,15 @@ import java.util.*;
 public class NPCsHandler {
 
     private final Map<String, SentienceNPC> npcCache;
+    @Getter
+    private final Set<Integer> npcIds;
     private JsonDocument jsonDocument;
     private final SkinFetcher skinFetcher;
     private final File file;
 
     public NPCsHandler() {
         this.npcCache = new HashMap<>();
+        this.npcIds = new HashSet<>();
         this.skinFetcher = SentienceEntity.getInstance().getSkinFetcher();
         this.file = new File(SentienceEntity.getInstance().getDataFolder(), "npcs.json");
         this.loadNPCsFromFile();
@@ -48,6 +49,7 @@ public class NPCsHandler {
             npc.setLocation(SentienceLocation.fromBukkitLocation(location));
 
             this.npcCache.put(npcName, npc);
+            this.npcIds.add(npc.getEntityId());
             this.saveNPCtoFile(npcName, location, skinValue, skinSignature);
             for (Player player : Bukkit.getOnlinePlayers()) {
                 this.spawnNPC(npcName, player);
@@ -62,6 +64,7 @@ public class NPCsHandler {
 
         SentienceNPC npc = this.npcCache.remove(npcName);
         npc.despawnAll();
+        this.npcIds.remove(npc.getEntityId());
 
         this.jsonDocument.remove(npcName);
 
@@ -121,6 +124,7 @@ public class NPCsHandler {
             npc.setShouldSneakWithPlayer(settings.get("shouldSneakWithPlayer").getAsBoolean());
 
             this.npcCache.put(npcName, npc);
+            this.npcIds.add(npc.getEntityId());
         }
     }
 
@@ -134,6 +138,10 @@ public class NPCsHandler {
             npcs.add(entry.getValue());
         }
         return npcs;
+    }
+
+    public Map<String, SentienceNPC> getNPCMap() {
+        return this.npcCache;
     }
 
     public boolean doesNPCExist(String npcName) {

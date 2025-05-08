@@ -105,9 +105,12 @@ public class SentienceHologram {
     private void updateLinesAfterRemoval() {
         List<Map.Entry<Integer, HologramLine>> linesList = new ArrayList<>(hologramLines.entrySet());
 
+        linesList.sort(Comparator.comparingInt(Map.Entry::getKey));
+
+        hologramLines.clear();
+
         for (int newIndex = 0; newIndex < linesList.size(); newIndex++) {
-            Map.Entry<Integer, HologramLine> entry = linesList.get(newIndex);
-            HologramLine line = entry.getValue();
+            HologramLine line = linesList.get(newIndex).getValue();
 
             Location newLocation = baseLocation.clone();
             newLocation.setPosition(new Vector3d(
@@ -131,6 +134,7 @@ public class SentienceHologram {
             hologramLines.put(newIndex, line);
         }
     }
+
 
     private void moveExistingLinesUp() {
         List<HologramLine> linesList = new ArrayList<>(hologramLines.values());

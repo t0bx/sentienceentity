@@ -13,12 +13,15 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
@@ -27,11 +30,11 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
     private final NPCsHandler npcsHandler;
     private final HologramManager hologramManager;
 
-    public SentienceEntityCommand() {
+    public SentienceEntityCommand(SentienceEntity sentienceEntity) {
         this.mm = MiniMessage.miniMessage();
-        this.prefix = SentienceEntity.getInstance().getPrefix();
-        this.npcsHandler = SentienceEntity.getInstance().getNpcshandler();
-        this.hologramManager = SentienceEntity.getInstance().getHologramManager();
+        this.prefix = sentienceEntity.getPrefix();
+        this.npcsHandler = sentienceEntity.getNpcshandler();
+        this.hologramManager = sentienceEntity.getHologramManager();
     }
 
     @Override
@@ -72,6 +75,15 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
                 }
 
                 this.handleRemoveNpc(player, args[1]);
+            }
+
+            case "listnpc" -> {
+                if (args.length != 1) {
+                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se listnpc <dark_gray>| <gray>List all npcs"));
+                    return true;
+                }
+
+                this.handleListNpcs(player);
             }
 
             case "createhologram" -> {
@@ -228,6 +240,17 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
         this.npcsHandler.removeNPC(npcName);
     }
 
+    private void handleListNpcs(Player player) {
+        if (this.npcsHandler.getNPCMap().isEmpty()) {
+            player.sendMessage(this.mm.deserialize(this.prefix + "You haven't spawned any NPCs yet."));
+            return;
+        }
+
+        this.npcsHandler.getNPCMap().forEach((npcName, npc) -> {
+            player.sendMessage(this.mm.deserialize(this.prefix + npcName + " | X: " + npc.getLocation().getX() + " | Y: " + npc.getLocation().getY() + " | Z: " + npc.getLocation().getZ()));
+        });
+    }
+
     private void handleCreateHologram(Player player, String npcName) {
         if (!this.npcsHandler.doesNPCExist(npcName)) {
             player.sendMessage(this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
@@ -332,6 +355,65 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String @NotNull [] args) {
-        return List.of();
+        if (args.length == 1) {
+            return List.of("spawnnpc", "editnpc", "listnpc", "createhologram", "addline", "setline", "lines", "removeLine", "removeHologram");
+        }
+
+        List<String> npcNames = this.npcsHandler.getNPCNames();
+        switch (args[0].toLowerCase()) {
+            case "spawnnpc" -> {
+                if (args.length == 2) {
+                    return Collections.singletonList("<Name>");
+                }
+
+                if (args.length == 3) {
+                    return Collections.singletonList("<Player Name>");
+                }
+            }
+
+            case "editnpc", "removenpc", "createhologram", "removehologram", "lines" -> {
+                return npcNames;
+            }
+
+            case "addline" -> {
+                if (args.length == 2) {
+                    return npcNames;
+                }
+
+                if (args.length == 3) {
+                    return Collections.singletonList("<Text>");
+                }
+            }
+
+            case "setline" -> {
+                if (args.length == 2) {
+                    return npcNames;
+                }
+
+                if (args.length == 3) {
+                    if (this.hologramManager.getHologramLines(args[1]) == null) return Collections.emptyList();
+
+                    return this.hologramManager.getHologramLines(args[1]).keySet().stream().map(String::valueOf).collect(Collectors.toList());
+                }
+
+                if (args.length == 4) {
+                    return Collections.singletonList("<Text>");
+                }
+            }
+
+            case "removeline" -> {
+                if (args.length == 2) {
+                    return npcNames;
+                }
+
+                if (args.length == 3) {
+                    if (this.hologramManager.getHologramLines(args[1]) == null) return Collections.emptyList();
+
+                    return this.hologramManager.getHologramLines(args[1]).keySet().stream().map(String::valueOf).collect(Collectors.toList());
+                }
+            }
+        }
+
+        return Collections.emptyList();
     }
 }
