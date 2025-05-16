@@ -9,6 +9,7 @@ import de.t0bx.sentienceEntity.listener.PlayerMoveListener;
 import de.t0bx.sentienceEntity.listener.PlayerToggleSneakListener;
 import de.t0bx.sentienceEntity.npc.NPCsHandler;
 import de.t0bx.sentienceEntity.packetlistener.PacketReceiveListener;
+import de.t0bx.sentienceEntity.update.UpdateManager;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
@@ -21,6 +22,8 @@ public final class SentienceEntity extends JavaPlugin {
     @Getter
     private static SentienceEntity instance;
 
+    private UpdateManager updateManager;
+
     private final String prefix = "<gradient:#0a0f2c:#0f4a6b:#00cfff><bold>SentienceEntity</bold></gradient> <dark_gray>| <gray>";
 
     private SkinFetcher skinFetcher;
@@ -28,6 +31,9 @@ public final class SentienceEntity extends JavaPlugin {
     private NPCsHandler npcshandler;
 
     private HologramManager hologramManager;
+
+    @Getter
+    private static SentienceAPI api;
 
     @Override
     public void onLoad() {
@@ -41,6 +47,9 @@ public final class SentienceEntity extends JavaPlugin {
         this.getLogger().info("Starting SentienceEntity...");
         PacketEvents.getAPI().init();
 
+        this.updateManager = new UpdateManager(this);
+        this.updateManager.checkForUpdate();
+
         this.skinFetcher = new SkinFetcher(this);
         this.npcshandler = new NPCsHandler();
         this.hologramManager = new HologramManager();
@@ -52,6 +61,7 @@ public final class SentienceEntity extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new PlayerToggleSneakListener(), this);
         this.getCommand("se").setExecutor(new SentienceEntityCommand(this));
 
+        api = new SentienceAPI();
         this.getLogger().info("SentienceEntity has been enabled!");
     }
 

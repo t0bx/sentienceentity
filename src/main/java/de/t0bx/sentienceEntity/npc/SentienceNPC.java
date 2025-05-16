@@ -73,7 +73,7 @@ public class SentienceNPC {
 
         WrapperPlayServerEntityMetadata metadataPacket = new WrapperPlayServerEntityMetadata(
                 this.getEntityId(),
-                Collections.singletonList(new EntityData(17, EntityDataTypes.BYTE, (byte) 127))
+                Collections.singletonList(new EntityData<>(17, EntityDataTypes.BYTE, (byte) 127))
         );
         PacketEvents.getAPI().getProtocolManager().sendPacket(channel, metadataPacket);
 
@@ -115,11 +115,11 @@ public class SentienceNPC {
         if (channel == null) return;
 
         boolean playerSneaking = player.isSneaking();
-        EntityData data;
+        EntityData<?> data;
         if (!playerSneaking) {
-            data = new EntityData(6, EntityDataTypes.ENTITY_POSE, EntityPose.CROUCHING);
+            data = new EntityData<>(6, EntityDataTypes.ENTITY_POSE, EntityPose.CROUCHING);
         } else {
-            data = new EntityData(6, EntityDataTypes.ENTITY_POSE, EntityPose.STANDING);
+            data = new EntityData<>(6, EntityDataTypes.ENTITY_POSE, EntityPose.STANDING);
         }
 
         WrapperPlayServerEntityMetadata metaDataPacket = new WrapperPlayServerEntityMetadata(this.getEntityId(), Collections.singletonList(data));
@@ -223,7 +223,7 @@ public class SentienceNPC {
 
         WrapperPlayServerEntityMetadata metadataPacket = new WrapperPlayServerEntityMetadata(
                 this.getEntityId(),
-                Collections.singletonList(new EntityData(17, EntityDataTypes.BYTE, (byte) 127))
+                Collections.singletonList(new EntityData<>(17, EntityDataTypes.BYTE, (byte) 127))
         );
         for (Object channel : this.channels) {
             PacketEvents.getAPI().getProtocolManager().sendPacket(channel, metadataPacket);

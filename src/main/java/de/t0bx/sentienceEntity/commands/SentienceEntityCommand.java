@@ -1,6 +1,7 @@
 package de.t0bx.sentienceEntity.commands;
 
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
+import de.t0bx.sentienceEntity.SentienceAPI;
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.hologram.HologramLine;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
