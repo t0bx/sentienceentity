@@ -22,6 +22,7 @@ import java.util.*;
 public class NPCsHandler {
 
     private final Map<String, SentienceNPC> npcCache;
+    private final Map<Integer, String> npcIdCache;
     @Getter
     private final Set<Integer> npcIds;
     private JsonDocument jsonDocument;
@@ -30,6 +31,7 @@ public class NPCsHandler {
 
     public NPCsHandler() {
         this.npcCache = new HashMap<>();
+        this.npcIdCache = new HashMap<>();
         this.npcIds = new HashSet<>();
         this.skinFetcher = SentienceEntity.getInstance().getSkinFetcher();
         this.file = new File(SentienceEntity.getInstance().getDataFolder(), "npcs.json");
@@ -49,6 +51,7 @@ public class NPCsHandler {
             npc.setLocation(SentienceLocation.fromBukkitLocation(location));
 
             this.npcCache.put(npcName, npc);
+            this.npcIdCache.put(npc.getEntityId(), npcName);
             this.npcIds.add(npc.getEntityId());
             this.saveNPCtoFile(npcName, location, skinValue, skinSignature);
             for (Player player : Bukkit.getOnlinePlayers()) {
@@ -65,6 +68,7 @@ public class NPCsHandler {
         SentienceNPC npc = this.npcCache.remove(npcName);
         npc.despawnAll();
         this.npcIds.remove(npc.getEntityId());
+        this.npcIdCache.remove(npc.getEntityId());
 
         this.jsonDocument.remove(npcName);
 
@@ -138,6 +142,10 @@ public class NPCsHandler {
             npcs.add(entry.getValue());
         }
         return npcs;
+    }
+
+    public String getNpcNameFromId(int entityId) {
+        return this.npcIdCache.getOrDefault(entityId, null);
     }
 
     public Map<String, SentienceNPC> getNPCMap() {

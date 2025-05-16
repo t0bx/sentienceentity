@@ -25,28 +25,27 @@ public class PacketReceiveListener implements PacketListener {
 
         WrapperPlayClientInteractEntity packet = new WrapperPlayClientInteractEntity(event);
         int entityId = packet.getEntityId();
-        WrapperPlayClientInteractEntity.InteractAction action = packet.getAction();
-
         if (!this.npcsHandler.getNpcIds().contains(entityId)) return;
 
         if (packet.getHand() != InteractionHand.MAIN_HAND) return;
 
+        WrapperPlayClientInteractEntity.InteractAction action = packet.getAction();
+
         ClickType clickType;
-        switch (action) {
-            case ATTACK -> clickType = ClickType.LEFT_CLICK;
-            case INTERACT -> clickType = ClickType.RIGHT_CLICK;
-            default -> clickType = null;
+        if (action == WrapperPlayClientInteractEntity.InteractAction.ATTACK) {
+            clickType = ClickType.LEFT_CLICK;
+        } else if (action == WrapperPlayClientInteractEntity.InteractAction.INTERACT) {
+            clickType = ClickType.RIGHT_CLICK;
+        } else {
+            return;
         }
 
-        if (clickType == null) return;
+        String npcName = this.npcsHandler.getNpcNameFromId(entityId);
+        if (npcName == null) return;
 
-        this.npcsHandler.getNPCMap().forEach((npcName, npc) -> {
-            if (entityId == npc.getEntityId()) {
-                Bukkit.getScheduler().runTask(SentienceEntity.getInstance(), () -> {
-                    PlayerClickNPCEvent playerClickNPCEvent = new PlayerClickNPCEvent(event.getPlayer(), npcName, clickType);
-                    Bukkit.getPluginManager().callEvent(playerClickNPCEvent);
-                });
-            }
+        Bukkit.getScheduler().runTask(SentienceEntity.getInstance(), () -> {
+           PlayerClickNPCEvent playerClickNPCEvent = new PlayerClickNPCEvent(event.getPlayer(), npcName, clickType);
+           Bukkit.getPluginManager().callEvent(playerClickNPCEvent);
         });
     }
 }
