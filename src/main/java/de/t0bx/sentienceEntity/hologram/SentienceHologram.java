@@ -10,6 +10,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDe
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
+import de.t0bx.sentienceEntity.utils.SentienceLocation;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,15 +27,15 @@ public class SentienceHologram {
     private final int entityId;
     private final UUID uuid;
 
-    private final Location baseLocation;
+    private final SentienceLocation baseLocation;
     private final Map<Integer, HologramLine> hologramLines;
 
     @Setter
-    private Location location;
+    private SentienceLocation location;
 
     private final Set<Object> channels = new HashSet<>();
 
-    public SentienceHologram(int entityId, UUID uuid, Location baseLocation) {
+    public SentienceHologram(int entityId, UUID uuid, SentienceLocation baseLocation) {
         this.entityId = entityId;
         this.uuid = uuid;
         this.baseLocation = baseLocation;
@@ -72,12 +73,12 @@ public class SentienceHologram {
                 null
         );
 
-        List<EntityData> data = List.of(
-                new EntityData(0, EntityDataTypes.BYTE, (byte) 0x20),
-                new EntityData(2, EntityDataTypes.OPTIONAL_ADV_COMPONENT, Optional.of(miniMessage.deserialize(line.getText()))),
-                new EntityData(3, EntityDataTypes.BOOLEAN, true),
-                new EntityData(5, EntityDataTypes.BOOLEAN, true),
-                new EntityData(15, EntityDataTypes.BYTE, (byte) 0x19)
+        List<EntityData<?>> data = List.of(
+                new EntityData<>(0, EntityDataTypes.BYTE, (byte) 0x20),
+                new EntityData<>(2, EntityDataTypes.OPTIONAL_ADV_COMPONENT, Optional.of(miniMessage.deserialize(line.getText()))),
+                new EntityData<>(3, EntityDataTypes.BOOLEAN, true),
+                new EntityData<>(5, EntityDataTypes.BOOLEAN, true),
+                new EntityData<>(15, EntityDataTypes.BYTE, (byte) 0x19)
         );
 
         WrapperPlayServerEntityMetadata metaPacket = new WrapperPlayServerEntityMetadata(line.getEntityId(), data);
@@ -169,8 +170,8 @@ public class SentienceHologram {
         if (line == null) return;
 
         line.setText(newText);
-        List<EntityData> data = List.of(
-                new EntityData(2, EntityDataTypes.OPTIONAL_ADV_COMPONENT, Optional.of(miniMessage.deserialize(newText)))
+        List<EntityData<?>> data = List.of(
+                new EntityData<>(2, EntityDataTypes.OPTIONAL_ADV_COMPONENT, Optional.of(miniMessage.deserialize(newText)))
         );
 
         WrapperPlayServerEntityMetadata metaPacket = new WrapperPlayServerEntityMetadata(line.getEntityId(), data);
@@ -181,6 +182,7 @@ public class SentienceHologram {
 
     public void spawn(Player player) {
         if (hasSpawned(player)) return;
+        if (!player.getWorld().getName().equals(this.getLocation().getWorld().getName())) return;
         Object channel = PacketEvents.getAPI().getPlayerManager().getChannel(player);
         if (channel == null) return;
 

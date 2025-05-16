@@ -251,19 +251,19 @@ public class NPCsHandler {
     }
 
     public void spawnAllNPCs(Player player) {
-        for (SentienceNPC npc : this.npcCache.values()) {
-            if (npc == null) continue;
+        if (player == null || !player.isOnline()) return;
 
-            npc.spawn(player);
-        }
+        this.npcCache.values().stream()
+                .filter(Objects::nonNull)
+                .forEach(npc -> npc.spawn(player));
     }
 
     public void despawnAllNPCs(Player player) {
-        for (SentienceNPC npc : this.npcCache.values()) {
-            if (npc == null) continue;
+        if (player == null || !player.isOnline()) return;
 
-            npc.despawn(player);
-        }
+        this.npcCache.values().stream()
+                .filter(Objects::nonNull)
+                .forEach(npc -> npc.despawn(player));
     }
 
     private void saveNPCtoFile(String npcName, Location location, String skinValue, String skinSignature) {
