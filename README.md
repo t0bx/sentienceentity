@@ -65,7 +65,7 @@ This Project uses Maven:
 <dependency>
     <groupId>de.t0bx</groupId>
     <artifactId>SentienceEntity</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <scope>provided</scope>
 </dependency>
 ```
@@ -80,7 +80,15 @@ import de.t0bx.sentienceEntity.hologram.SentienceHologram;
 import de.t0bx.sentienceEntity.npc.SentienceNPC;
 
 public void npcExamples() {
-    SentienceEntity.getApi().getNpcsHandler().createNPC(npcName, playerName, location); //Creates a npc name must be unique
+    //Creates a npc, name must be unique
+    SentienceEntity.getApi().getNpcsHandler().createNPC(npcName, playerName, location);
+    
+    SentienceEntity.getApi().getNpcsHandler().createNPC(npcName, playerName, location, () -> {
+        //Callback when npc got created
+    });
+
+    //Creating npc without fetching the skinValue and skinSignature from the skinfetcher
+    SentienceEntity.getApi().getNpcsHandler().createNPC(npcName, location, skinValue, skinSiganture);
 
     SentienceNPC npc = SentienceEntity.getApi().getNpcsHandler().getNPC(npcName); //Returns the npc class
 
