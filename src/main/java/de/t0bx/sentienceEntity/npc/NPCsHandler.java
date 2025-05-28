@@ -60,6 +60,54 @@ public class NPCsHandler {
         });
     }
 
+    public void createNPC(String npcName, Location location, String skinValue, String skinSignature) {
+        UUID npcUUID = UUID.randomUUID();
+
+        UserProfile userProfile = new UserProfile(npcUUID, "");
+        userProfile.setTextureProperties(Collections.singletonList(new TextureProperty("textures", skinValue, skinSignature)));
+
+        SentienceNPC npc = new SentienceNPC(SpigotReflectionUtil.generateEntityId(), userProfile);
+        npc.setLocation(SentienceLocation.fromBukkitLocation(location));
+
+        this.npcCache.put(npcName, npc);
+        this.npcIdCache.put(npc.getEntityId(), npcName);
+        this.npcIds.add(npc.getEntityId());
+        this.saveNPCtoFile(npcName, location, skinValue, skinSignature);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            this.spawnNPC(npcName, player);
+        }
+    }
+
+    public void createNPC(String npcName, String playerName, Location location, Runnable callback) {
+        UUID npcUUID = UUID.randomUUID();
+
+        this.skinFetcher.fetchSkin(playerName, (skinValue, skinSignature) -> {
+            if (skinValue == null && skinSignature == null) {
+                if (callback != null) callback.run();
+                return;
+            }
+
+            UserProfile userProfile = new UserProfile(npcUUID, "");
+            userProfile.setTextureProperties(Collections.singletonList(new TextureProperty("textures", skinValue, skinSignature)));
+
+            SentienceNPC npc = new SentienceNPC(SpigotReflectionUtil.generateEntityId(), userProfile);
+            npc.setLocation(SentienceLocation.fromBukkitLocation(location));
+
+            this.npcCache.put(npcName, npc);
+            this.npcIdCache.put(npc.getEntityId(), npcName);
+            this.npcIds.add(npc.getEntityId());
+            this.saveNPCtoFile(npcName, location, skinValue, skinSignature);
+
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                this.spawnNPC(npcName, player);
+            }
+
+            if (callback != null) {
+                callback.run();
+            }
+        });
+    }
+
     public void removeNPC(String npcName) {
         this.jsonDocument = JsonDocument.loadDocument(this.file);
         if (this.jsonDocument == null) return;
