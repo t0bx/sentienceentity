@@ -65,7 +65,7 @@ This Project uses Maven:
 <dependency>
     <groupId>de.t0bx</groupId>
     <artifactId>SentienceEntity</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <scope>provided</scope>
 </dependency>
 ```
