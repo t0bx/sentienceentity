@@ -1,14 +1,29 @@
+/**
+ *Creative Commons Attribution-NonCommercial 4.0 International Public License
+ * By using this code, you agree to the following terms:
+ * You are free to:
+ * - Share — copy and redistribute the material in any medium or format
+ * - Adapt — remix, transform, and build upon the material
+ * Under the following terms:
+ * 1. Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+ * 2. NonCommercial — You may not use the material for commercial purposes.
+ * No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+ * Full License Text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+ * ---
+ * Copyright (c) 2025 t0bx
+ * This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
+ */
+
 package de.t0bx.sentienceEntity.npc;
 
-import com.github.retrooper.packetevents.protocol.player.TextureProperty;
-import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.utils.JsonDocument;
-import de.t0bx.sentienceEntity.utils.SentienceLocation;
+import de.t0bx.sentienceEntity.utils.ReflectionUtils;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
-import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -38,17 +53,45 @@ public class NPCsHandler {
         this.loadNPCsFromFile();
     }
 
+    public void createNPC(String npcName, String playerName, Location location, boolean persistent) {
+        UUID npcUUID = UUID.randomUUID();
+
+        this.skinFetcher.fetchSkin(playerName, (skinValue, skinSignature) -> {
+            if (skinValue == null && skinSignature == null) return;
+
+            GameProfile gameProfile = new GameProfile(npcUUID, "");
+            gameProfile.getProperties().clear();
+            gameProfile.getProperties().put("textures", new Property("textures", skinValue, skinSignature));
+
+            SentienceNPC npc = new SentienceNPC(ReflectionUtils.generateValidMinecraftEntityId(), gameProfile);
+            npc.setLocation(location);
+
+            this.npcCache.put(npcName, npc);
+            this.npcIdCache.put(npc.getEntityId(), npcName);
+            this.npcIds.add(npc.getEntityId());
+
+            if (persistent) {
+                this.saveNPCtoFile(npcName, location, skinValue, skinSignature);
+            }
+
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                this.spawnNPC(npcName, player);
+            }
+        });
+    }
+
     public void createNPC(String npcName, String playerName, Location location) {
         UUID npcUUID = UUID.randomUUID();
 
         this.skinFetcher.fetchSkin(playerName, (skinValue, skinSignature) -> {
             if (skinValue == null && skinSignature == null) return;
 
-            UserProfile userProfile = new UserProfile(npcUUID, "");
-            userProfile.setTextureProperties(Collections.singletonList(new TextureProperty("textures", skinValue, skinSignature)));
+            GameProfile gameProfile = new GameProfile(npcUUID, "");
+            gameProfile.getProperties().clear();
+            gameProfile.getProperties().put("textures", new Property("textures", skinValue, skinSignature));
 
-            SentienceNPC npc = new SentienceNPC(SpigotReflectionUtil.generateEntityId(), userProfile);
-            npc.setLocation(SentienceLocation.fromBukkitLocation(location));
+            SentienceNPC npc = new SentienceNPC(ReflectionUtils.generateValidMinecraftEntityId(), gameProfile);
+            npc.setLocation(location);
 
             this.npcCache.put(npcName, npc);
             this.npcIdCache.put(npc.getEntityId(), npcName);
@@ -63,11 +106,12 @@ public class NPCsHandler {
     public void createNPC(String npcName, Location location, String skinValue, String skinSignature) {
         UUID npcUUID = UUID.randomUUID();
 
-        UserProfile userProfile = new UserProfile(npcUUID, "");
-        userProfile.setTextureProperties(Collections.singletonList(new TextureProperty("textures", skinValue, skinSignature)));
+        GameProfile gameProfile = new GameProfile(npcUUID, "");
+        gameProfile.getProperties().clear();
+        gameProfile.getProperties().put("textures", new Property("textures", skinValue, skinSignature));
 
-        SentienceNPC npc = new SentienceNPC(SpigotReflectionUtil.generateEntityId(), userProfile);
-        npc.setLocation(SentienceLocation.fromBukkitLocation(location));
+        SentienceNPC npc = new SentienceNPC(ReflectionUtils.generateValidMinecraftEntityId(), gameProfile);
+        npc.setLocation(location);
 
         this.npcCache.put(npcName, npc);
         this.npcIdCache.put(npc.getEntityId(), npcName);
@@ -87,11 +131,12 @@ public class NPCsHandler {
                 return;
             }
 
-            UserProfile userProfile = new UserProfile(npcUUID, "");
-            userProfile.setTextureProperties(Collections.singletonList(new TextureProperty("textures", skinValue, skinSignature)));
+            GameProfile gameProfile = new GameProfile(npcUUID, "");
+            gameProfile.getProperties().clear();
+            gameProfile.getProperties().put("textures", new Property("textures", skinValue, skinSignature));
 
-            SentienceNPC npc = new SentienceNPC(SpigotReflectionUtil.generateEntityId(), userProfile);
-            npc.setLocation(SentienceLocation.fromBukkitLocation(location));
+            SentienceNPC npc = new SentienceNPC(ReflectionUtils.generateValidMinecraftEntityId(), gameProfile);
+            npc.setLocation(location);
 
             this.npcCache.put(npcName, npc);
             this.npcIdCache.put(npc.getEntityId(), npcName);
@@ -163,13 +208,13 @@ public class NPCsHandler {
             String skinSignature = data.get("skin-signature").getAsString();
 
             UUID npcUUID = UUID.randomUUID();
-            UserProfile profile = new UserProfile(npcUUID, "");
-            profile.setTextureProperties(Collections.singletonList(
-                    new TextureProperty("textures", skinValue, skinSignature)
-            ));
 
-            SentienceNPC npc = new SentienceNPC(SpigotReflectionUtil.generateEntityId(), profile);
-            npc.setLocation(SentienceLocation.fromBukkitLocation(location));
+            GameProfile gameProfile = new GameProfile(npcUUID, "");
+            gameProfile.getProperties().clear();
+            gameProfile.getProperties().put("textures", new Property("textures", skinValue, skinSignature));
+
+            SentienceNPC npc = new SentienceNPC(ReflectionUtils.generateValidMinecraftEntityId(), gameProfile);
+            npc.setLocation(location);
 
             JsonObject settings = data.getAsJsonObject("settings");
             npc.setShouldLookAtPlayer(settings.get("shouldLookAtPlayer").getAsBoolean());
@@ -177,6 +222,7 @@ public class NPCsHandler {
 
             this.npcCache.put(npcName, npc);
             this.npcIds.add(npc.getEntityId());
+            this.npcIdCache.put(npc.getEntityId(), npcName);
         }
     }
 
@@ -231,7 +277,7 @@ public class NPCsHandler {
         if (this.jsonDocument == null) return;
         if (npc == null) return;
 
-        npc.teleport(SentienceLocation.fromBukkitLocation(location));
+        npc.teleport(location);
 
         this.jsonDocument.update(npcName + ".location-x", location.getX());
         this.jsonDocument.update(npcName + ".location-y", location.getY());

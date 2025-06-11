@@ -1,21 +1,44 @@
+/**
+ *Creative Commons Attribution-NonCommercial 4.0 International Public License
+ * By using this code, you agree to the following terms:
+ * You are free to:
+ * - Share — copy and redistribute the material in any medium or format
+ * - Adapt — remix, transform, and build upon the material
+ * Under the following terms:
+ * 1. Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+ * 2. NonCommercial — You may not use the material for commercial purposes.
+ * No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+ * Full License Text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+ * ---
+ * Copyright (c) 2025 t0bx
+ * This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
+ */
+
 package de.t0bx.sentienceEntity.hologram;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
-import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
-import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
-import com.github.retrooper.packetevents.protocol.world.Location;
-import com.github.retrooper.packetevents.util.Vector3d;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
-import de.t0bx.sentienceEntity.utils.SentienceLocation;
-import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
+import de.t0bx.sentienceEntity.utils.ReflectionUtils;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.PositionMoveRotation;
+import net.minecraft.world.phys.Vec3;
+import org.bukkit.Location;
+import org.bukkit.craftbukkit.v1_21_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_21_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 
@@ -27,15 +50,15 @@ public class SentienceHologram {
     private final int entityId;
     private final UUID uuid;
 
-    private final SentienceLocation baseLocation;
+    private final Location baseLocation;
     private final Map<Integer, HologramLine> hologramLines;
 
     @Setter
-    private SentienceLocation location;
+    private Location location;
 
-    private final Set<Object> channels = new HashSet<>();
+    private final Set<ServerPlayer> channels = new HashSet<>();
 
-    public SentienceHologram(int entityId, UUID uuid, SentienceLocation baseLocation) {
+    public SentienceHologram(int entityId, UUID uuid, Location baseLocation) {
         this.entityId = entityId;
         this.uuid = uuid;
         this.baseLocation = baseLocation;
@@ -46,13 +69,9 @@ public class SentienceHologram {
 
     public void addLine(String line) {
         int lineIndex = hologramLines.size();
-        int lineEntityId = SpigotReflectionUtil.generateEntityId();
+        int lineEntityId = ReflectionUtils.generateValidMinecraftEntityId();
         Location lineLocation = this.baseLocation.clone();
-        lineLocation.setPosition(new Vector3d(
-                this.baseLocation.getX(),
-                this.baseLocation.getY() + 1.8 - (LINE_HEIGHT * (lineIndex + 1)),
-                this.baseLocation.getZ()
-        ));
+        lineLocation.add(0, 1.8 - (LINE_HEIGHT * (lineIndex + 1)), 0);
 
         HologramLine hologramLine = new HologramLine(lineEntityId, this.uuid, line, lineLocation);
         hologramLines.put(lineIndex, hologramLine);
@@ -63,29 +82,40 @@ public class SentienceHologram {
 
     private void spawnLine(HologramLine line) {
         Location location = line.getLocation();
-        WrapperPlayServerSpawnEntity spawnPacket = new WrapperPlayServerSpawnEntity(
+        var addEntityPacket = new ClientboundAddEntityPacket(
                 line.getEntityId(),
                 UUID.randomUUID(),
-                EntityTypes.ARMOR_STAND,
-                location,
+                location.getX(),
+                location.getY(),
+                location.getZ(),
+                location.getPitch(),
                 location.getYaw(),
+                EntityType.ARMOR_STAND,
                 0,
-                null
+                new Vec3(0, 0, 0),
+                location.getYaw()
         );
 
-        List<EntityData<?>> data = List.of(
-                new EntityData<>(0, EntityDataTypes.BYTE, (byte) 0x20),
-                new EntityData<>(2, EntityDataTypes.OPTIONAL_ADV_COMPONENT, Optional.of(miniMessage.deserialize(line.getText()))),
-                new EntityData<>(3, EntityDataTypes.BOOLEAN, true),
-                new EntityData<>(5, EntityDataTypes.BOOLEAN, true),
-                new EntityData<>(15, EntityDataTypes.BYTE, (byte) 0x19)
-        );
+        ServerLevel nmsWorld = ((CraftWorld) location.getWorld()).getHandle();
+        HolderLookup.Provider provider = nmsWorld.registryAccess();
 
-        WrapperPlayServerEntityMetadata metaPacket = new WrapperPlayServerEntityMetadata(line.getEntityId(), data);
+        net.kyori.adventure.text.Component component = this.miniMessage.deserialize(line.getText());
+        String json = GsonComponentSerializer.gson().serialize(component);
+        Component nmsComponent = Component.Serializer.fromJson(json, provider);
 
-        for (Object channel : channels) {
-            PacketEvents.getAPI().getProtocolManager().sendPacket(channel, spawnPacket);
-            PacketEvents.getAPI().getProtocolManager().sendPacket(channel, metaPacket);
+        if (nmsComponent == null) return;
+
+        var metadata = new ClientboundSetEntityDataPacket(line.getEntityId(), List.of(
+                new SynchedEntityData.DataValue<>(0, EntityDataSerializers.BYTE, (byte) 0x20),
+                new SynchedEntityData.DataValue<>(2, EntityDataSerializers.OPTIONAL_COMPONENT, Optional.of(nmsComponent)),
+                new SynchedEntityData.DataValue<>(3, EntityDataSerializers.BOOLEAN, true),
+                new SynchedEntityData.DataValue<>(5, EntityDataSerializers.BOOLEAN, true),
+                new SynchedEntityData.DataValue<>(15, EntityDataSerializers.BYTE, (byte) 0x19)
+        ));
+
+        for (ServerPlayer player : channels) {
+            player.connection.send(addEntityPacket);
+            player.connection.send(metadata);
         }
     }
 
@@ -95,9 +125,9 @@ public class SentienceHologram {
         HologramLine line = hologramLines.remove(index);
         if (line == null) return;
 
-        WrapperPlayServerDestroyEntities destroyPacket = new WrapperPlayServerDestroyEntities(line.getEntityId());
-        for (Object channel : channels) {
-            PacketEvents.getAPI().getProtocolManager().sendPacket(channel, destroyPacket);
+        var removeEntityPacket = new ClientboundRemoveEntitiesPacket(line.getEntityId());
+        for (ServerPlayer player : channels) {
+            player.connection.send(removeEntityPacket);
         }
 
         updateLinesAfterRemoval();
@@ -114,28 +144,29 @@ public class SentienceHologram {
             HologramLine line = linesList.get(newIndex).getValue();
 
             Location newLocation = baseLocation.clone();
-            newLocation.setPosition(new Vector3d(
-                    baseLocation.getX(),
-                    baseLocation.getY() + 1.8 + (LINE_HEIGHT * (linesList.size() - newIndex - 1)),
-                    baseLocation.getZ()
-            ));
+            newLocation.add(0, 1.8 + (LINE_HEIGHT * (linesList.size() - newIndex - 1)), 0);
 
             line.setLocation(newLocation);
 
-            WrapperPlayServerEntityTeleport teleport = new WrapperPlayServerEntityTeleport(
+            var teleportPacket = new ClientboundTeleportEntityPacket(
                     line.getEntityId(),
-                    newLocation,
+                    new PositionMoveRotation(
+                            new Vec3(newLocation.getX(), newLocation.getY(), newLocation.getZ()),
+                            new Vec3(0, 0, 0),
+                            newLocation.getYaw(),
+                            newLocation.getPitch()
+                    ),
+                    Collections.emptySet(),
                     true
             );
 
-            for (Object channel : channels) {
-                PacketEvents.getAPI().getProtocolManager().sendPacket(channel, teleport);
+            for (ServerPlayer player : channels) {
+                player.connection.send(teleportPacket);
             }
 
             hologramLines.put(newIndex, line);
         }
     }
-
 
     private void moveExistingLinesUp() {
         List<HologramLine> linesList = new ArrayList<>(hologramLines.values());
@@ -143,22 +174,24 @@ public class SentienceHologram {
             HologramLine line = linesList.get(i);
 
             Location newLocation = baseLocation.clone();
-            newLocation.setPosition(new Vector3d(
-                    baseLocation.getX(),
-                    baseLocation.getY() + 1.8 + (LINE_HEIGHT * (linesList.size() - i - 1)),
-                    baseLocation.getZ()
-            ));
+            newLocation.add(0, 1.8 + (LINE_HEIGHT * (linesList.size() - i - 1)), 0);
 
             line.setLocation(newLocation);
 
-            WrapperPlayServerEntityTeleport teleport = new WrapperPlayServerEntityTeleport(
+            var teleportPacket = new ClientboundTeleportEntityPacket(
                     line.getEntityId(),
-                    newLocation,
+                    new PositionMoveRotation(
+                            new Vec3(newLocation.getX(), newLocation.getY(), newLocation.getZ()),
+                            new Vec3(0, 0, 0),
+                            newLocation.getYaw(),
+                            newLocation.getPitch()
+                    ),
+                    Collections.emptySet(),
                     true
             );
 
-            for (Object channel : channels) {
-                PacketEvents.getAPI().getProtocolManager().sendPacket(channel, teleport);
+            for (ServerPlayer player : channels) {
+                player.connection.send(teleportPacket);
             }
         }
     }
@@ -170,23 +203,32 @@ public class SentienceHologram {
         if (line == null) return;
 
         line.setText(newText);
-        List<EntityData<?>> data = List.of(
-                new EntityData<>(2, EntityDataTypes.OPTIONAL_ADV_COMPONENT, Optional.of(miniMessage.deserialize(newText)))
-        );
 
-        WrapperPlayServerEntityMetadata metaPacket = new WrapperPlayServerEntityMetadata(line.getEntityId(), data);
-        for (Object channel : channels) {
-            PacketEvents.getAPI().getProtocolManager().sendPacket(channel, metaPacket);
+        ServerLevel nmsWorld = ((CraftWorld) location.getWorld()).getHandle();
+        HolderLookup.Provider provider = nmsWorld.registryAccess();
+
+        net.kyori.adventure.text.Component component = this.miniMessage.deserialize(line.getText());
+        String json = GsonComponentSerializer.gson().serialize(component);
+        Component nmsComponent = Component.Serializer.fromJson(json, provider);
+
+        if (nmsComponent == null) return;
+
+        var metadata = new ClientboundSetEntityDataPacket(line.getEntityId(), List.of(
+                new SynchedEntityData.DataValue<>(2, EntityDataSerializers.OPTIONAL_COMPONENT, Optional.of(nmsComponent))
+        ));
+
+        for (ServerPlayer player : this.channels) {
+            player.connection.send(metadata);
         }
     }
 
     public void spawn(Player player) {
-        if (hasSpawned(player)) return;
-        if (!player.getWorld().getName().equals(this.getLocation().getWorld().getName())) return;
-        Object channel = PacketEvents.getAPI().getPlayerManager().getChannel(player);
-        if (channel == null) return;
+        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
 
-        channels.add(channel);
+        if (hasSpawned(serverPlayer)) return;
+        if (!player.getWorld().getName().equals(this.getLocation().getWorld().getName())) return;
+
+        channels.add(serverPlayer);
 
         for (HologramLine line : hologramLines.values()) {
             spawnLine(line);
@@ -195,18 +237,16 @@ public class SentienceHologram {
 
     public void destroy() {
         for (HologramLine line : hologramLines.values()) {
-            WrapperPlayServerDestroyEntities destroy = new WrapperPlayServerDestroyEntities(line.getEntityId());
-            for (Object channel : channels) {
-                PacketEvents.getAPI().getProtocolManager().sendPacket(channel, destroy);
+            var destroyEntityPacket = new ClientboundRemoveEntitiesPacket(line.getEntityId());
+            for (ServerPlayer player : channels) {
+                player.connection.send(destroyEntityPacket);
             }
         }
         channels.clear();
         hologramLines.clear();
     }
 
-    public boolean hasSpawned(Player player) {
-        Object channel = PacketEvents.getAPI().getPlayerManager().getChannel(player);
-        if (channel == null) return false;
-        return channels.contains(channel);
+    public boolean hasSpawned(ServerPlayer player) {
+        return this.channels.contains(player);
     }
 }
