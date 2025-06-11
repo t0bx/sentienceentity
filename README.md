@@ -61,16 +61,11 @@ See the full license here: [https://creativecommons.org/licenses/by-nc/4.0/](htt
 |------------|-------------|
 | `se.command` | Allows access to the main plugin command |
 
-## Dependencies
-
-- PacketEvents (2.8.0) (Required)
-
 ## Installation
 
 1. Download the latest version of SentienceEntity
-2. Place the jar file in your server's `plugins` folder
-3. Install PacketEvents plugin
-4. Restart your server
+2. Place the jar file in your paper server's `plugins` folder
+3. Restart your server
 
 ## Development
 It's also possible to use SentienceEntity as a API for developing.
@@ -87,7 +82,7 @@ This Project uses Maven:
 <dependency>
     <groupId>de.t0bx</groupId>
     <artifactId>SentienceEntity</artifactId>
-    <version>1.2</version>
+    <version>1.3</version>
     <scope>provided</scope>
 </dependency>
 ```
