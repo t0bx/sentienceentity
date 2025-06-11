@@ -1,17 +1,30 @@
+/**
+ *Creative Commons Attribution-NonCommercial 4.0 International Public License
+ * By using this code, you agree to the following terms:
+ * You are free to:
+ * - Share — copy and redistribute the material in any medium or format
+ * - Adapt — remix, transform, and build upon the material
+ * Under the following terms:
+ * 1. Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+ * 2. NonCommercial — You may not use the material for commercial purposes.
+ * No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+ * Full License Text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+ * ---
+ * Copyright (c) 2025 t0bx
+ * This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
+ */
+
 package de.t0bx.sentienceEntity;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import de.t0bx.sentienceEntity.commands.SentienceEntityCommand;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.listener.NPCSpawnListener;
 import de.t0bx.sentienceEntity.listener.PlayerMoveListener;
 import de.t0bx.sentienceEntity.listener.PlayerToggleSneakListener;
 import de.t0bx.sentienceEntity.npc.NPCsHandler;
-import de.t0bx.sentienceEntity.packetlistener.PacketReceiveListener;
+import de.t0bx.sentienceEntity.packets.PacketInterceptor;
 import de.t0bx.sentienceEntity.update.UpdateManager;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
-import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -32,20 +45,20 @@ public final class SentienceEntity extends JavaPlugin {
 
     private HologramManager hologramManager;
 
+    private PacketInterceptor packetInterceptor;
+
     @Getter
     private static SentienceAPI api;
-
-    @Override
-    public void onLoad() {
-        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
-        PacketEvents.getAPI().load();
-    }
 
     @Override
     public void onEnable() {
         instance = this;
         this.getLogger().info("Starting SentienceEntity...");
-        PacketEvents.getAPI().init();
+        if (!this.isPaperServer()) {
+            this.getLogger().warning("This plugin requires Paper 1.21.4 to run properly!");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
 
         this.updateManager = new UpdateManager(this);
         this.updateManager.checkForUpdate();
@@ -53,7 +66,7 @@ public final class SentienceEntity extends JavaPlugin {
         this.skinFetcher = new SkinFetcher(this);
         this.npcshandler = new NPCsHandler();
         this.hologramManager = new HologramManager();
-        PacketEvents.getAPI().getEventManager().registerListener(new PacketReceiveListener(this.npcshandler), PacketListenerPriority.NORMAL);
+        this.packetInterceptor = new PacketInterceptor(this.npcshandler);
         this.getLogger().info("Loaded " + this.npcshandler.getLoadedSize() + " NPCs.");
 
         Bukkit.getPluginManager().registerEvents(new NPCSpawnListener(), this);
@@ -67,7 +80,17 @@ public final class SentienceEntity extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        PacketEvents.getAPI().terminate();
-        this.hologramManager.destroyAll();
+        if (this.hologramManager != null) {
+            this.hologramManager.destroyAll();
+        }
+    }
+
+    private boolean isPaperServer() {
+        try {
+            Class.forName("com.destroystokyo.paper.utils.PaperPluginLogger");
+            return true;
+        } catch (ClassNotFoundException exception) {
+            return false;
+        }
     }
 }

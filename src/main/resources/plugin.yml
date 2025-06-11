@@ -1,9 +1,7 @@
 name: SentienceEntity
-version: '1.2'
+version: '1.3'
 main: de.t0bx.sentienceEntity.SentienceEntity
 api-version: '1.21'
-depend:
-  - packetevents
 authors: [ t0bx ]
 commands:
   se:

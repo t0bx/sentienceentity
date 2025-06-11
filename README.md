@@ -1,6 +1,29 @@
 # SentienceEntity
 
-A powerful SpigotMC plugin that adds interactive NPCs with advanced features to your Minecraft server.
+A powerful Paper plugin that adds interactive NPCs with advanced features to your Minecraft server.
+
+## Legal Notice
+
+This plugin uses reflection and direct access to Minecraft server internals (NMS) and CraftBukkit classes.  
+These classes are not bundled or redistributed — they are generated using BuildTools from SpigotMC.
+
+No Mojang or Microsoft assets, classes, or proprietary code are included in this repository.
+
+This project is not affiliated with Mojang, Microsoft, or Minecraft in any way.
+
+## License
+
+This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)**.
+
+You are free to:
+- Share — copy and redistribute the code in any medium or format
+- Adapt — remix, transform, and build upon the code
+
+**Under the following terms:**
+- **Attribution** — You must give appropriate credit.
+- **NonCommercial** — You may not use the code for commercial purposes.
+
+See the full license here: [https://creativecommons.org/licenses/by-nc/4.0/](https://creativecommons.org/licenses/by-nc/4.0/)
 
 ## Features
 
@@ -14,8 +37,7 @@ A powerful SpigotMC plugin that adds interactive NPCs with advanced features to 
 
 ## Requirements
 
-- Spigot/Paper 1.21
-- PacketEvents 2.8.0
+- **Paper 1.21.4**
 
 ## Commands
 
