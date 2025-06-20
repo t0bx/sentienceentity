@@ -283,7 +283,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         this.hologramManager.show(player, npcName);
-        this.hologramManager.addLine(npcName, text);
+        this.hologramManager.addLine(npcName, text, true);
         player.sendMessage(this.mm.deserialize(this.prefix + "You have added a line to the hologram for the npc '" + npcName + "'."));
     }
 

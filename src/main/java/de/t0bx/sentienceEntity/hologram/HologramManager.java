@@ -60,12 +60,14 @@ public class HologramManager {
         this.cachedHolograms.put(npcName, hologram);
     }
 
-    public void addLine(String npcName, String line) {
+    public void addLine(String npcName, String line, boolean persistent) {
         if (!this.cachedHolograms.containsKey(npcName)) return;
 
         SentienceHologram hologram = this.cachedHolograms.get(npcName);
         hologram.addLine(line);
-        this.saveLineToFile(npcName, line);
+        if (persistent) {
+            this.saveLineToFile(npcName, line);
+        }
     }
 
     public void show(Player player, String npcName) {
