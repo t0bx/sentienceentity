@@ -250,23 +250,27 @@ public class NPCsHandler {
         return this.npcCache.containsKey(npcName);
     }
 
-    public void updateSkin(String npcName, String playerName) {
-        this.jsonDocument = JsonDocument.loadDocument(this.file);
+    public void updateSkin(String npcName, String playerName, boolean persistent) {
+
         SentienceNPC npc = this.npcCache.get(npcName);
         if (npc == null) return;
 
         this.skinFetcher.fetchSkin(playerName, (skinValue, skinSignature) -> {
             if (skinValue == null && skinSignature == null) return;
 
-            this.jsonDocument.update(npcName + ".skin-value", skinValue);
-            this.jsonDocument.update(npcName + ".skin-signature", skinSignature);
-
             npc.changeSkin(skinValue, skinSignature);
 
-            try {
-                this.jsonDocument.save(this.file);
-            } catch (IOException exception) {
-                exception.printStackTrace();
+            if (persistent) {
+                this.jsonDocument = JsonDocument.loadDocument(this.file);
+                if (this.jsonDocument == null) return;
+                this.jsonDocument.update(npcName + ".skin-value", skinValue);
+                this.jsonDocument.update(npcName + ".skin-signature", skinSignature);
+
+                try {
+                    this.jsonDocument.save(this.file);
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
             }
         });
     }

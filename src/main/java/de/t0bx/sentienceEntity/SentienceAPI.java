@@ -19,6 +19,7 @@ package de.t0bx.sentienceEntity;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.npc.NPCsHandler;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public class SentienceAPI {
@@ -26,8 +27,12 @@ public class SentienceAPI {
     private final NPCsHandler npcsHandler;
     private final HologramManager hologramManager;
 
+    @Setter
+    private boolean isApiOnly;
+
     public SentienceAPI() {
         this.npcsHandler = SentienceEntity.getInstance().getNpcshandler();
         this.hologramManager = SentienceEntity.getInstance().getHologramManager();
+        this.isApiOnly = false;
     }
 }

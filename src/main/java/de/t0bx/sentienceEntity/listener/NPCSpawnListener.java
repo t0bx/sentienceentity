@@ -19,16 +19,12 @@ package de.t0bx.sentienceEntity.listener;
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.npc.NPCsHandler;
-import net.minecraft.server.level.ServerPlayer;
-import org.bukkit.craftbukkit.v1_21_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-
-import java.lang.reflect.Field;
 
 public class NPCSpawnListener implements Listener {
 
@@ -57,32 +53,10 @@ public class NPCSpawnListener implements Listener {
 
     @EventHandler
     public void onWorldSwitch(PlayerChangedWorldEvent event) {
-        this.npcsHandler.despawnAllNPCs(event.getPlayer());
-        this.npcsHandler.spawnAllNPCs(event.getPlayer());
-    }
-
-    private void debugConnection(Player player) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        try {
-            System.out.println("ServerPlayer class: " + serverPlayer.getClass().getName());
-            System.out.println("Connection class: " + serverPlayer.connection.getClass().getName());
-
-            Field[] fields = serverPlayer.connection.getClass().getDeclaredFields();
-            for (Field field : fields) {
-                System.out.println("Field: " + field.getName() + " - Type: " + field.getType().getName());
-            }
-
-            Class<?> superClass = serverPlayer.connection.getClass().getSuperclass();
-            while (superClass != null) {
-                System.out.println("SuperClass: " + superClass.getName());
-                Field[] superFields = superClass.getDeclaredFields();
-                for (Field field : superFields) {
-                    System.out.println("Field: " + field.getName() + " - Type: " + field.getType().getName());
-                }
-                superClass = superClass.getSuperclass();
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
+        Player player = event.getPlayer();
+        this.npcsHandler.despawnAllNPCs(player);
+        this.hologramManager.unShowAllHolograms(player);
+        this.npcsHandler.spawnAllNPCs(player);
+        this.hologramManager.showAllHolograms(player);
     }
 }
