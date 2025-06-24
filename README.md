@@ -82,7 +82,7 @@ This Project uses Maven:
 <dependency>
     <groupId>de.t0bx</groupId>
     <artifactId>SentienceEntity</artifactId>
-    <version>1.3</version>
+    <version>1.5</version>
     <scope>provided</scope>
 </dependency>
 ```
@@ -118,6 +118,16 @@ public void hologramExamples() {
     SentienceHologram hologram = SentienceEntity.getApi().getHologramManager().getHologram(npcName); //Returns the hologram class
     
     //Also there are even more methods you can work with
+}
+```
+
+Setting in api-only mode
+
+```java
+import de.t0bx.sentienceEntity.SentienceEntity;
+
+public void example() {
+    SentienceEntity.getApi().setApiOnly(true); //-> When activated the /se command doesn't work anymore
 }
 ```
 
