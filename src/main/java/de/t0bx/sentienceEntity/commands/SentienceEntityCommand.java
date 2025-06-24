@@ -62,6 +62,11 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (SentienceEntity.getApi().isApiOnly()) {
+            player.sendMessage(this.mm.deserialize(this.prefix + "This plugin works just as api-only!"));
+            return true;
+        }
+
         if (args.length == 0) {
             this.sendHelp(player);
             return true;
@@ -238,7 +243,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
                 }
 
                 String playerName = args[3];
-                this.npcsHandler.updateSkin(npcName, playerName);
+                this.npcsHandler.updateSkin(npcName, playerName, true);
                 player.sendMessage(this.mm.deserialize(this.prefix + "You've updated the skin of the npc '" + npcName + "'"));
             }
         }

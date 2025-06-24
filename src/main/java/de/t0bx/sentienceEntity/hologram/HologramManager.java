@@ -53,6 +53,13 @@ public class HologramManager {
         }
     }
 
+    public void unShowAllHolograms(Player player) {
+        for (Map.Entry<String, SentienceHologram> hologramEntry : cachedHolograms.entrySet()) {
+            SentienceHologram hologram = hologramEntry.getValue();
+            hologram.despawn(player);
+        }
+    }
+
     public void createHologram(String npcName, Location location) {
         if (this.cachedHolograms.containsKey(npcName)) return;
 

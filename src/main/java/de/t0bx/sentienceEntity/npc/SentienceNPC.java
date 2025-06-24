@@ -76,6 +76,8 @@ public class SentienceNPC {
         if (this.hasSpawned(serverPlayer)) return;
         if (this.getLocation() == null) return;
 
+        if (!this.getLocation().getWorld().getName().equalsIgnoreCase(player.getWorld().getName())) return;
+
         ServerPlayer fakePlayer = this.getFakePlayer();
 
         var actions = EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER);

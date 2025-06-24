@@ -38,7 +38,6 @@ import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_21_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_21_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 
 import java.util.*;
 
@@ -233,6 +232,19 @@ public class SentienceHologram {
         for (HologramLine line : hologramLines.values()) {
             spawnLine(line);
         }
+    }
+
+    public void despawn(Player player) {
+        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
+
+        if (!hasSpawned(serverPlayer)) return;
+
+        for (HologramLine line : hologramLines.values()) {
+            var destroyEntityPacket = new ClientboundRemoveEntitiesPacket(line.getEntityId());
+            serverPlayer.connection.send(destroyEntityPacket);
+        }
+
+        channels.remove(serverPlayer);
     }
 
     public void destroy() {
