@@ -17,8 +17,8 @@
 package de.t0bx.sentienceEntity.packets;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
-import de.t0bx.sentienceEntity.events.PlayerClickNPCEvent;
-import de.t0bx.sentienceEntity.npc.NPCsHandler;
+import de.t0bx.sentienceEntity.events.PlayerClickNpcEvent;
+import de.t0bx.sentienceEntity.npc.NpcsHandler;
 import de.t0bx.sentienceEntity.utils.ClickType;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -41,9 +41,9 @@ public class PacketInterceptor {
     private Field entityIdField = null;
     private Field actionField = null;
     private Method getTypeMethod = null;
-    private final NPCsHandler npCsHandler;
+    private final NpcsHandler npCsHandler;
 
-    public PacketInterceptor(NPCsHandler npCsHandler) {
+    public PacketInterceptor(NpcsHandler npCsHandler) {
         this.npCsHandler = npCsHandler;
 
         try {
@@ -99,7 +99,7 @@ public class PacketInterceptor {
                                     String npcName = npCsHandler.getNpcNameFromId(entityId);
                                     if (npcName == null) return;
                                     Bukkit.getScheduler().runTask(SentienceEntity.getInstance(), () -> {
-                                        PlayerClickNPCEvent event = new PlayerClickNPCEvent(player, npcName, clickType);
+                                        PlayerClickNpcEvent event = new PlayerClickNpcEvent(player, npcName, clickType);
                                         Bukkit.getPluginManager().callEvent(event);
                                     });
                                 } catch (Exception exception) {

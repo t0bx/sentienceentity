@@ -18,7 +18,7 @@ package de.t0bx.sentienceEntity.listener;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
-import de.t0bx.sentienceEntity.npc.NPCsHandler;
+import de.t0bx.sentienceEntity.npc.NpcsHandler;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -28,7 +28,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 public class NPCSpawnListener implements Listener {
 
-    private final NPCsHandler npcsHandler;
+    private final NpcsHandler npcsHandler;
     private final HologramManager hologramManager;
 
     public NPCSpawnListener() {

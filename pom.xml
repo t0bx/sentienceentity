@@ -6,7 +6,7 @@
 
     <groupId>de.t0bx</groupId>
     <artifactId>SentienceEntity</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
     <packaging>jar</packaging>
 
     <name>SentienceEntity</name>
@@ -172,6 +172,14 @@
             <version>${remapped.version}</version>
             <scope>provided</scope>
             <classifier>remapped-mojang</classifier>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/net.kyori/adventure-nbt -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-nbt</artifactId>
+            <version>4.23.0</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

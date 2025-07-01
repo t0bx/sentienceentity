@@ -134,7 +134,7 @@ public void example() {
 Working with the PlayerClickNPCEvent
 
 ```java
-import de.t0bx.sentienceEntity.events.PlayerClickNPCEvent;
+import de.t0bx.sentienceEntity.events.PlayerClickNpcEvent;
 import de.t0bx.sentienceEntity.utils.ClickType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -142,7 +142,7 @@ import org.bukkit.event.Listener;
 public class NPCClickListener implements Listener {
 
     @EventHandler
-    public void onNPCClick(PlayerClickNPCEvent event) {
+    public void onNPCClick(PlayerClickNpcEvent event) {
         event.getClickType(); // Returns if its RIGHT_CLICK or LEFT_CLICK
         event.getPlayer(); // The Player who interacts with the entity
         event.getNpcName(); // The npcName which the player interacts with
@@ -153,7 +153,7 @@ public class NPCClickListener implements Listener {
                 event.getPlayer().sendMessage("You've right clicked the npc with the name test!");
             }
         }
-        
+
         if (event.getClickType() == ClickType.LEFT_CLICK) {
             if (event.getNpcName().equalsIgnoreCase("test2")) {
                 event.getPlayer().sendMessage("You've left clicked the npc with the name test2!");

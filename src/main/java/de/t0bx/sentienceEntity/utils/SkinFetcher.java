@@ -40,6 +40,17 @@ public class SkinFetcher {
         this.plugin = plugin;
     }
 
+    /**
+     * Fetches the skin data for a given Minecraft player.
+     * If the skin data for the player is cached, it will be retrieved immediately.
+     * Otherwise, the data is fetched asynchronously from Mojang's API and then cached.
+     * The provided callback will be invoked with the skin value and signature upon completion.
+     * If an error occurs or the player is not found, the callback will be invoked with null values.
+     *
+     * @param playerName The name of the Minecraft player whose skin data is to be fetched.
+     * @param callback   A BiConsumer that accepts two strings: the skin value and the skin signature.
+     *                   If the data fetch fails, both parameters will be null.
+     */
     public void fetchSkin(String playerName, BiConsumer<String, String> callback) {
         if (skinCache.containsKey(playerName.toLowerCase())) {
             SkinData cachedSkin = skinCache.get(playerName.toLowerCase());
