@@ -19,7 +19,7 @@ package de.t0bx.sentienceEntity.commands;
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.hologram.HologramLine;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
-import de.t0bx.sentienceEntity.npc.NPCsHandler;
+import de.t0bx.sentienceEntity.npc.NpcsHandler;
 import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.Command;
@@ -40,7 +40,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
     private final MiniMessage mm;
     private final String prefix;
-    private final NPCsHandler npcsHandler;
+    private final NpcsHandler npcsHandler;
     private final HologramManager hologramManager;
 
     public SentienceEntityCommand(SentienceEntity sentienceEntity) {
@@ -256,6 +256,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         this.npcsHandler.removeNPC(npcName);
+        player.sendMessage(this.mm.deserialize(this.prefix + "You have removed the npc '" + npcName + "'."));
     }
 
     private void handleListNpcs(Player player) {

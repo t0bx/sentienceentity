@@ -17,14 +17,14 @@
 package de.t0bx.sentienceEntity;
 
 import de.t0bx.sentienceEntity.hologram.HologramManager;
-import de.t0bx.sentienceEntity.npc.NPCsHandler;
+import de.t0bx.sentienceEntity.npc.NpcsHandler;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 public class SentienceAPI {
 
-    private final NPCsHandler npcsHandler;
+    private final NpcsHandler npcsHandler;
     private final HologramManager hologramManager;
 
     @Setter

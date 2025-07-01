@@ -24,14 +24,14 @@ import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
-public class PlayerClickNPCEvent extends PlayerEvent {
+public class PlayerClickNpcEvent extends PlayerEvent {
 
     private static final HandlerList HANDLERS = new HandlerList();
 
     private final String npcName;
     private final ClickType clickType;
 
-    public PlayerClickNPCEvent(@NotNull Player who, String npcName, ClickType clickType) {
+    public PlayerClickNpcEvent(@NotNull Player who, String npcName, ClickType clickType) {
         super(who);
         this.npcName = npcName;
         this.clickType = clickType;

@@ -16,34 +16,18 @@
 
 package de.t0bx.sentienceEntity.npc;
 
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
-import io.netty.buffer.Unpooled;
+import de.t0bx.sentienceEntity.SentienceEntity;
+import de.t0bx.sentienceEntity.packet.PacketPlayer;
+import de.t0bx.sentienceEntity.packet.utils.EntityType;
+import de.t0bx.sentienceEntity.packet.utils.MetadataEntry;
+import de.t0bx.sentienceEntity.packet.utils.MetadataType;
+import de.t0bx.sentienceEntity.packet.utils.NpcProfile;
+import de.t0bx.sentienceEntity.packet.wrapper.packets.*;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.protocol.game.*;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ClientInformation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.*;
-import net.minecraft.world.level.GameType;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.scores.PlayerTeam;
-import net.minecraft.world.scores.Scoreboard;
-import net.minecraft.world.scores.Team;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_21_R3.CraftServer;
-import org.bukkit.craftbukkit.v1_21_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_21_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.*;
 
 @Getter
@@ -51,7 +35,7 @@ public class SentienceNPC {
 
     private final int entityId;
 
-    private final GameProfile profile;
+    private final NpcProfile profile;
 
     @Setter
     private Location location;
@@ -62,142 +46,101 @@ public class SentienceNPC {
     @Setter
     private boolean shouldSneakWithPlayer;
 
-    private final Set<ServerPlayer> channels = new HashSet<>();
+    private final Set<PacketPlayer> channels = new HashSet<>();
 
-    public SentienceNPC(int entityId, GameProfile profile) {
+    public SentienceNPC(int entityId, NpcProfile profile) {
         this.entityId = entityId;
         this.profile = profile;
     }
 
     public void spawn(Player player) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        ServerLevel nmsWorld = ((CraftWorld) player.getWorld()).getHandle();
+        PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
 
-        if (this.hasSpawned(serverPlayer)) return;
+        if (this.hasSpawned(packetPlayer)) return;
         if (this.getLocation() == null) return;
 
         if (!this.getLocation().getWorld().getName().equalsIgnoreCase(player.getWorld().getName())) return;
 
-        ServerPlayer fakePlayer = this.getFakePlayer();
+        List<PacketPlayerInfoUpdate.Action> actions = List.of(
+                PacketPlayerInfoUpdate.Action.ADD_PLAYER
+        );
+        List<PacketPlayerInfoUpdate.PlayerEntry> entries = List.of(
+                new PacketPlayerInfoUpdate.PlayerEntry(
+                        profile.getUuid(),
+                        "",
+                        profile.getProperties(),
+                        0,
+                        false
+                )
+        );
 
-        var actions = EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER);
-        try {
-            Constructor<ClientboundPlayerInfoUpdatePacket> packetConstructor =
-                    ClientboundPlayerInfoUpdatePacket.class.getDeclaredConstructor(RegistryFriendlyByteBuf.class);
-            packetConstructor.setAccessible(true);
+        var infoUpdatePacket = new PacketPlayerInfoUpdate(actions, entries);
 
-            RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), ((CraftServer) Bukkit.getServer()).getServer().registryAccess());
-            buf.writeEnumSet(actions, ClientboundPlayerInfoUpdatePacket.Action.class);
-            buf.writeCollection(Collections.singletonList(this.getPlayerInfo()), (buffer, entry) -> {
-                buffer.writeUUID(entry.profileId());
+        packetPlayer.sendPacket(infoUpdatePacket);
 
-                for (ClientboundPlayerInfoUpdatePacket.Action action : actions) {
-                    try {
-                        Field writerField = action.getClass().getDeclaredField("j");
-                        writerField.setAccessible(true);
-
-                        Object writer = writerField.get(action);
-                        ClientboundPlayerInfoUpdatePacket.Action.Writer writeFunc = (ClientboundPlayerInfoUpdatePacket.Action.Writer) writer;
-                        writeFunc.write((RegistryFriendlyByteBuf) buffer, entry);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-
-            var infoUpdatePacket = packetConstructor.newInstance(buf);
-            serverPlayer.connection.send(infoUpdatePacket);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-
-        var addEntityPacket = new ClientboundAddEntityPacket(
+        var addEntityPacket = new PacketSpawnEntity(
                 entityId,
-                fakePlayer.getUUID(),
-                this.location.getX(),
-                this.location.getY(),
-                this.location.getZ(),
-                this.location.getPitch(),
-                this.location.getYaw(),
+                profile.getUuid(),
                 EntityType.PLAYER,
+                location,
+                location.getYaw(),
                 0,
-                new Vec3(0, 0, 0),
-                this.location.getYaw()
+                (short) 0,
+                (short) 0,
+                (short) 0
         );
 
-        serverPlayer.connection.send(addEntityPacket);
+        packetPlayer.sendPacket(addEntityPacket);
 
-        var metadata = new ClientboundSetEntityDataPacket(
-                entityId,
-                List.of(new SynchedEntityData.DataValue<>(17, EntityDataSerializers.BYTE, (byte) 127))
+        List<MetadataEntry> metadataEntries = List.of(
+                new MetadataEntry(17, MetadataType.BYTE, (byte) 127)
         );
-        serverPlayer.connection.send(metadata);
 
-        Scoreboard scoreboard = nmsWorld.getScoreboard();
-        PlayerTeam team = scoreboard.getPlayerTeam("hidden_" + fakePlayer.getId());
-        if (team == null) {
-            team = scoreboard.addPlayerTeam("hidden_" + fakePlayer.getId());
-        }
-        team.setNameTagVisibility(Team.Visibility.NEVER);
-        scoreboard.addPlayerToTeam(fakePlayer.getScoreboardName(), team);
+        var metadataPacket = new PacketSetEntityMetadata(entityId, metadataEntries);
 
-        var teamPacket = ClientboundSetPlayerTeamPacket.createAddOrModifyPacket(team, true);
-        serverPlayer.connection.send(teamPacket);
+        packetPlayer.sendPacket(metadataPacket);
 
-        this.channels.add(serverPlayer);
+        this.channels.add(packetPlayer);
     }
 
     public void updateRotation(float yaw, float pitch) {
         this.getLocation().setYaw(yaw);
         this.getLocation().setPitch(pitch);
 
-        byte yawByte = this.toRotationByte(yaw);
-        byte pitchByte = this.toRotationByte(pitch);
-
-        var rotationPacket = new ClientboundMoveEntityPacket.Rot(
+        var rotationPacket = new PacketUpdateEntityRotation(
                 entityId,
-                yawByte,
-                pitchByte,
+                yaw,
+                pitch,
                 true
         );
-        try {
-            Constructor<ClientboundRotateHeadPacket> headPacketConstructor =
-                    ClientboundRotateHeadPacket.class.getDeclaredConstructor(FriendlyByteBuf.class);
-            headPacketConstructor.setAccessible(true);
 
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeVarInt(entityId);
-            buf.writeByte(yawByte);
+        var headRotationPacket = new PacketSetHeadRotation(entityId, yaw);
 
-            var entityHead = headPacketConstructor.newInstance(buf);
-            for (ServerPlayer player : this.channels) {
-                player.connection.send(rotationPacket);
-                player.connection.send(entityHead);
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(rotationPacket);
+            player.sendPacket(headRotationPacket);
         }
     }
 
     public void updateSneaking(Player player) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        if (!this.hasSpawned(serverPlayer)) return;
+        PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
+        if (!this.hasSpawned(packetPlayer)) return;
 
         boolean playerSneaking = player.isSneaking();
-        SynchedEntityData.DataValue<?> dataValue;
+        MetadataEntry entry;
         if (!playerSneaking) {
-            dataValue = new SynchedEntityData.DataValue<>(6, EntityDataSerializers.POSE, Pose.CROUCHING);
+            entry = new MetadataEntry(6, MetadataType.POSE, 5);
         } else {
-            dataValue = new SynchedEntityData.DataValue<>(6, EntityDataSerializers.POSE, Pose.STANDING);
+            entry = new MetadataEntry(6, MetadataType.POSE, 0);
         }
 
-        var metadataPacket = new ClientboundSetEntityDataPacket(this.getEntityId(), Collections.singletonList(dataValue));
-        serverPlayer.connection.send(metadataPacket);
+        var metadataPacket = new PacketSetEntityMetadata(this.getEntityId(), Collections.singletonList(entry));
+        packetPlayer.sendPacket(metadataPacket);
     }
 
     public void updateLookingAtPlayer(Player player) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        if (!this.hasSpawned(serverPlayer)) return;
+        PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
+        if (!this.hasSpawned(packetPlayer)) return;
 
         Location npcLocation = this.getLocation().clone().add(0, 1.62, 0);
         Location playerEyeLocation = player.getEyeLocation();
@@ -214,197 +157,116 @@ public class SentienceNPC {
 
         yaw = this.normalizeYaw(yaw);
 
-        byte yawByte = this.toRotationByte(yaw);
-        byte pitchByte = this.toRotationByte(pitch);
-
-        var entityRotation = new ClientboundMoveEntityPacket.Rot(
+        var entityRotation = new PacketUpdateEntityRotation(
                 entityId,
-                yawByte,
-                pitchByte,
+                yaw,
+                pitch,
                 true
         );
-        serverPlayer.connection.send(entityRotation);
 
-        try {
-            Constructor<ClientboundRotateHeadPacket> headPacketConstructor =
-                    ClientboundRotateHeadPacket.class.getDeclaredConstructor(FriendlyByteBuf.class);
-            headPacketConstructor.setAccessible(true);
+        packetPlayer.sendPacket(entityRotation);
 
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeVarInt(entityId);
-            buf.writeByte(yawByte);
-
-            var entityHead = headPacketConstructor.newInstance(buf);
-            serverPlayer.connection.send(entityHead);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
+        var headRotationPacket = new PacketSetHeadRotation(entityId, yaw);
+        packetPlayer.sendPacket(headRotationPacket);
     }
 
     public void despawn(Player player) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        if (!this.hasSpawned(serverPlayer)) return;
+        PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
+        if (!this.hasSpawned(packetPlayer)) return;
 
-        var removeEntitiesPacket = new ClientboundRemoveEntitiesPacket(this.getEntityId());
-        serverPlayer.connection.send(removeEntitiesPacket);
-        this.channels.remove(serverPlayer);
+        var removeEntityPacket = new PacketRemoveEntities(List.of(this.getEntityId()));
+        packetPlayer.sendPacket(removeEntityPacket);
+        this.channels.remove(packetPlayer);
     }
 
     public void despawnAll() {
-        var removeEntitiesPacket = new ClientboundRemoveEntitiesPacket(this.getEntityId());
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(removeEntitiesPacket);
+        var removeEntitiesPacket = new PacketRemoveEntities(List.of(this.getEntityId()));
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(removeEntitiesPacket);
         }
         this.channels.clear();
     }
 
     public void teleport(Location location) {
         this.setLocation(location);
-        var entityTeleportPacket = new ClientboundTeleportEntityPacket(this.getEntityId(),
-                new PositionMoveRotation(
-                        new Vec3(
-                        location.getX(),
-                        location.getY(),
-                        location.getZ()),
-                        new Vec3(0, 0, 0),
-                        location.getYaw(),
-                        location.getPitch()
-                ),
-                Collections.emptySet(),
-                true);
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(entityTeleportPacket);
+        var entityTeleportPacket = new PacketTeleportEntity(
+                this.getEntityId(),
+                location,
+                0, 0, 0,
+                true
+        );
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(entityTeleportPacket);
         }
     }
 
     public void changeSkin(String skinValue, String skinSignature) {
-        var removePacket = new ClientboundPlayerInfoRemovePacket(Collections.singletonList(this.getProfile().getId()));
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(removePacket);
+        var removePacket = new PacketPlayerInfoRemove(Collections.singletonList(this.getProfile().getUuid()));
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(removePacket);
         }
 
-        var destroyEntityPacket = new ClientboundRemoveEntitiesPacket(this.getEntityId());
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(destroyEntityPacket);
+        var removeEntitiesPacket = new PacketRemoveEntities(List.of(this.getEntityId()));
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(removeEntitiesPacket);
         }
 
         this.getProfile().getProperties().clear();
-        this.getProfile().getProperties().put("textures", new Property("textures", skinValue, skinSignature));
+        this.getProfile().getProperties().add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
 
-        ServerPlayer fakePlayer = this.getFakePlayer();
+        List<PacketPlayerInfoUpdate.Action> actions = List.of(
+                PacketPlayerInfoUpdate.Action.ADD_PLAYER
+        );
+        List<PacketPlayerInfoUpdate.PlayerEntry> entries = List.of(
+                new PacketPlayerInfoUpdate.PlayerEntry(
+                        profile.getUuid(),
+                        "",
+                        profile.getProperties(),
+                        0,
+                        false
+                )
+        );
 
-        var actions = EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER);
-        try {
-            Constructor<ClientboundPlayerInfoUpdatePacket> packetConstructor =
-                    ClientboundPlayerInfoUpdatePacket.class.getDeclaredConstructor(RegistryFriendlyByteBuf.class);
-            packetConstructor.setAccessible(true);
+        var infoUpdatePacket = new PacketPlayerInfoUpdate(actions, entries);
 
-            RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), ((CraftServer) Bukkit.getServer()).getServer().registryAccess());
-            buf.writeEnumSet(actions, ClientboundPlayerInfoUpdatePacket.Action.class);
-            buf.writeCollection(Collections.singletonList(this.getPlayerInfo()), (buffer, entry) -> {
-                buffer.writeUUID(entry.profileId());
-
-                for (ClientboundPlayerInfoUpdatePacket.Action action : actions) {
-                    try {
-                        Field writerField = action.getClass().getDeclaredField("j");
-                        writerField.setAccessible(true);
-
-                        Object writer = writerField.get(action);
-                        ClientboundPlayerInfoUpdatePacket.Action.Writer writeFunc = (ClientboundPlayerInfoUpdatePacket.Action.Writer) writer;
-                        writeFunc.write((RegistryFriendlyByteBuf) buffer, entry);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-
-            var infoUpdatePacket = packetConstructor.newInstance(buf);
-            for (ServerPlayer player : this.channels) {
-                player.connection.send(infoUpdatePacket);
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(infoUpdatePacket);
         }
 
-        var addEntityPacket = new ClientboundAddEntityPacket(
+        var addEntityPacket = new PacketSpawnEntity(
                 entityId,
-                fakePlayer.getUUID(),
-                this.location.getX(),
-                this.location.getY(),
-                this.location.getZ(),
-                this.location.getPitch(),
-                this.location.getYaw(),
+                profile.getUuid(),
                 EntityType.PLAYER,
+                location,
+                location.getYaw(),
                 0,
-                new Vec3(0, 0, 0),
-                this.location.getYaw()
+                (short) 0,
+                (short) 0,
+                (short) 0
         );
 
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(addEntityPacket);
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(addEntityPacket);
         }
 
-        var metadata = new ClientboundSetEntityDataPacket(
-                entityId,
-                List.of(new SynchedEntityData.DataValue<>(17, EntityDataSerializers.BYTE, (byte) 127))
+        List<MetadataEntry> metadataEntries = List.of(
+                new MetadataEntry(17, MetadataType.BYTE, (byte) 127)
         );
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(metadata);
-        }
 
-        ServerLevel nmsWorld = ((CraftWorld) this.getLocation().getWorld()).getHandle();
-        Scoreboard scoreboard = nmsWorld.getScoreboard();
-        PlayerTeam team = scoreboard.getPlayerTeam("hidden_" + fakePlayer.getId());
-        if (team == null) {
-            team = scoreboard.addPlayerTeam("hidden_" + fakePlayer.getId());
-        }
-        team.setNameTagVisibility(Team.Visibility.NEVER);
-        scoreboard.addPlayerToTeam(fakePlayer.getScoreboardName(), team);
+        var metadataPacket = new PacketSetEntityMetadata(entityId, metadataEntries);
 
-        var teamPacket = ClientboundSetPlayerTeamPacket.createAddOrModifyPacket(team, true);
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(teamPacket);
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(metadataPacket);
         }
     }
 
-    public boolean hasSpawned(ServerPlayer serverPlayer) {
-        return this.channels.contains(serverPlayer);
-    }
-
-    private ServerPlayer getFakePlayer() {
-        ServerLevel nmsWorld = ((CraftWorld) this.getLocation().getWorld()).getHandle();
-        return new ServerPlayer(
-                ((CraftServer) Bukkit.getServer()).getServer(),
-                nmsWorld,
-                profile,
-                ClientInformation.createDefault()
-        );
-    }
-
-    private ClientboundPlayerInfoUpdatePacket.Entry getPlayerInfo() {
-        return new ClientboundPlayerInfoUpdatePacket.Entry(
-                this.profile.getId(),
-                this.profile,
-                false,
-                0,
-                GameType.DEFAULT_MODE,
-                null,
-                true,
-                0,
-                null
-        );
+    public boolean hasSpawned(PacketPlayer packetPlayer) {
+        return this.channels.contains(packetPlayer);
     }
 
     private float normalizeYaw(float yaw) {
         yaw %= 360;
         if (yaw < 0) yaw += 360;
         return yaw;
-    }
-
-    private byte toRotationByte(float degrees) {
-        degrees = degrees % 360;
-        if (degrees < 0) degrees += 360;
-
-        return (byte) (degrees * 256.0F / 360.0F);
     }
 }

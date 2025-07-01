@@ -21,7 +21,11 @@ import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.listener.NPCSpawnListener;
 import de.t0bx.sentienceEntity.listener.PlayerMoveListener;
 import de.t0bx.sentienceEntity.listener.PlayerToggleSneakListener;
-import de.t0bx.sentienceEntity.npc.NPCsHandler;
+import de.t0bx.sentienceEntity.npc.NpcsHandler;
+import de.t0bx.sentienceEntity.packet.PacketController;
+import de.t0bx.sentienceEntity.packet.channel.ChannelAccess;
+import de.t0bx.sentienceEntity.packet.channel.PaperChannelAccess;
+import de.t0bx.sentienceEntity.packet.channel.SpigotChannelAccess;
 import de.t0bx.sentienceEntity.packets.PacketInterceptor;
 import de.t0bx.sentienceEntity.update.UpdateManager;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
@@ -41,7 +45,9 @@ public final class SentienceEntity extends JavaPlugin {
 
     private SkinFetcher skinFetcher;
 
-    private NPCsHandler npcshandler;
+    private PacketController packetController;
+
+    private NpcsHandler npcshandler;
 
     private HologramManager hologramManager;
 
@@ -51,20 +57,29 @@ public final class SentienceEntity extends JavaPlugin {
     private static SentienceAPI api;
 
     @Override
+    public void onLoad() {
+        if (isPaperServer()) {
+            ChannelAccess.setRegistry(new PaperChannelAccess());
+            this.getLogger().info("SentienceEntity using PaperChannelAccess");
+        } else {
+            ChannelAccess.setRegistry(new SpigotChannelAccess());
+            this.getLogger().info("SentienceEntity using SpigotChannelAccess");
+        }
+    }
+
+    @Override
     public void onEnable() {
         instance = this;
         this.getLogger().info("Starting SentienceEntity...");
-        if (!this.isPaperServer()) {
-            this.getLogger().warning("This plugin requires Paper 1.21.4 to run properly!");
-            Bukkit.getPluginManager().disablePlugin(this);
-            return;
-        }
 
         this.updateManager = new UpdateManager(this);
         this.updateManager.checkForUpdate();
 
         this.skinFetcher = new SkinFetcher(this);
-        this.npcshandler = new NPCsHandler();
+
+        this.packetController = new PacketController();
+
+        this.npcshandler = new NpcsHandler();
         this.hologramManager = new HologramManager();
         this.packetInterceptor = new PacketInterceptor(this.npcshandler);
         this.getLogger().info("Loaded " + this.npcshandler.getLoadedSize() + " NPCs.");

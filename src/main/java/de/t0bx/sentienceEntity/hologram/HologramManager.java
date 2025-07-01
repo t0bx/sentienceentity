@@ -18,7 +18,7 @@ package de.t0bx.sentienceEntity.hologram;
 
 import com.google.gson.JsonObject;
 import de.t0bx.sentienceEntity.SentienceEntity;
-import de.t0bx.sentienceEntity.npc.NPCsHandler;
+import de.t0bx.sentienceEntity.npc.NpcsHandler;
 import de.t0bx.sentienceEntity.utils.JsonDocument;
 import de.t0bx.sentienceEntity.utils.ReflectionUtils;
 import org.bukkit.Location;
@@ -33,7 +33,7 @@ public class HologramManager {
 
     private final File file;
     private JsonDocument jsonDocument;
-    private final NPCsHandler npcshandler;
+    private final NpcsHandler npcshandler;
 
     private final Map<String, SentienceHologram> cachedHolograms = new ConcurrentHashMap<>();
 
