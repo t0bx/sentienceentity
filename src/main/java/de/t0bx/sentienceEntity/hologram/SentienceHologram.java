@@ -23,14 +23,26 @@ import de.t0bx.sentienceEntity.packet.utils.MetadataEntry;
 import de.t0bx.sentienceEntity.packet.utils.MetadataType;
 import de.t0bx.sentienceEntity.packet.wrapper.packets.*;
 import de.t0bx.sentienceEntity.utils.ReflectionUtils;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import org.bukkit.Location;
+import org.bukkit.craftbukkit.v1_21_R3.CraftWorld;
 import org.bukkit.entity.Player;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 @Getter
@@ -90,11 +102,10 @@ public class SentienceHologram {
         }
 
         Component component = MiniMessage.miniMessage().deserialize(line.getText());
-        Optional<Component> optional = Optional.of(component);
 
         var metadata = new PacketSetEntityMetadata(line.getEntityId(), List.of(
                 new MetadataEntry(0, MetadataType.BYTE, (byte) 32),
-                new MetadataEntry(2, MetadataType.OPTIONAL_TEXT_COMPONENT, optional),
+                new MetadataEntry(2, MetadataType.OPTIONAL_TEXT_COMPONENT, Optional.of(component)),
                 new MetadataEntry(3, MetadataType.BOOLEAN, true),
                 new MetadataEntry(5, MetadataType.BOOLEAN, true),
                 new MetadataEntry(15, MetadataType.BYTE, (byte) 25)
