@@ -39,7 +39,7 @@ public class NPCSpawnListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        SentienceEntity.getInstance().getPacketInterceptor().injectPlayer(player);
+        //SentienceEntity.getInstance().getPacketInterceptor().injectPlayer(player);
 
         this.npcsHandler.spawnAllNPCs(player);
         this.hologramManager.showAllHolograms(player);
@@ -48,7 +48,10 @@ public class NPCSpawnListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        SentienceEntity.getInstance().getPacketInterceptor().uninjectPlayer(player);
+        //SentienceEntity.getInstance().getPacketInterceptor().uninjectPlayer(player);
+
+        this.npcsHandler.despawnAllNPCs(player);
+        this.hologramManager.unShowAllHolograms(player);
     }
 
     @EventHandler
