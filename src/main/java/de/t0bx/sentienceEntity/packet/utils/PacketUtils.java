@@ -55,12 +55,25 @@ public class PacketUtils {
         buf.writeShort((short) value);
     }
 
-    //not working
-    /*public static void writeOptionalComponent(ByteBuf buf, Optional<Component> optional) {
+    public static void writeOptionalComponent(ByteBuf buf, Optional<Component> optional) {
+        buf.writeBoolean(true);
         if (optional.isPresent()) {
             buf.writeBoolean(true);
+
+            buf.writeByte(0x0A);
+            writeString(buf, "");
+
+            buf.writeByte(0x08);
+            writeString(buf, "text");
+            writeString(buf, "test");
+
+            buf.writeByte(0x08);
+            writeString(buf, "color");
+            writeString(buf, "green");
+
+            buf.writeByte(0x00);
         } else {
             buf.writeBoolean(false);
         }
-    }*/
+    }
 }

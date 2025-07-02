@@ -45,14 +45,12 @@ public class PacketSetEntityMetadata implements PacketWrapper {
      * @return a {@code ByteBuf} containing the serialized packet data for setting entity metadata.
      */
     @Override
-    @SuppressWarnings("unchecked")
     public ByteBuf build() {
         ByteBuf buf = Unpooled.buffer();
 
         PacketUtils.writeVarInt(buf, packetId);
 
         PacketUtils.writeVarInt(buf, entityId);
-
 
         for (MetadataEntry entry : metadata) {
             buf.writeByte(entry.index);
