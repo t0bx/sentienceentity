@@ -19,8 +19,8 @@ package de.t0bx.sentienceEntity.npc;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import de.t0bx.sentienceEntity.SentienceEntity;
-import de.t0bx.sentienceEntity.packet.utils.NpcProfile;
-import de.t0bx.sentienceEntity.packet.wrapper.packets.PacketPlayerInfoUpdate;
+import de.t0bx.sentienceEntity.network.utils.NpcProfile;
+import de.t0bx.sentienceEntity.network.wrapper.packets.PacketPlayerInfoUpdate;
 import de.t0bx.sentienceEntity.utils.JsonDocument;
 import de.t0bx.sentienceEntity.utils.ReflectionUtils;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
@@ -72,7 +72,7 @@ public class NpcsHandler {
 
             List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
             properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
-            NpcProfile npcProfile = new NpcProfile(npcEntityId, npcUUID, properties);
+            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID, properties);
 
             SentienceNPC npc = new SentienceNPC(npcEntityId, npcProfile);
             npc.setLocation(location);
@@ -110,7 +110,7 @@ public class NpcsHandler {
 
             List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
             properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
-            NpcProfile npcProfile = new NpcProfile(npcEntityId, npcUUID, properties);
+            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID, properties);
 
             SentienceNPC npc = new SentienceNPC(npcEntityId, npcProfile);
             npc.setLocation(location);
@@ -143,7 +143,7 @@ public class NpcsHandler {
 
         List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
         properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
-        NpcProfile npcProfile = new NpcProfile(npcEntityId, npcUUID, properties);
+        NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID, properties);
 
         SentienceNPC npc = new SentienceNPC(npcEntityId, npcProfile);
         npc.setLocation(location);
@@ -183,7 +183,7 @@ public class NpcsHandler {
 
             List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
             properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
-            NpcProfile npcProfile = new NpcProfile(npcEntityId, npcUUID, properties);
+            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID, properties);
 
             SentienceNPC npc = new SentienceNPC(npcEntityId, npcProfile);
             npc.setLocation(location);
@@ -281,7 +281,7 @@ public class NpcsHandler {
 
             List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
             properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
-            NpcProfile npcProfile = new NpcProfile(npcEntityId, npcUUID, properties);
+            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID, properties);
 
             SentienceNPC npc = new SentienceNPC(npcEntityId, npcProfile);
             npc.setLocation(location);
@@ -524,6 +524,13 @@ public class NpcsHandler {
         this.npcCache.values().stream()
                 .filter(Objects::nonNull)
                 .forEach(npc -> npc.despawn(player));
+    }
+
+    public void despawnAll() {
+        this.npcCache.values().forEach(SentienceNPC::despawnAll);
+        this.npcCache.clear();
+        this.npcIds.clear();
+        this.npcIdCache.clear();
     }
 
     private void saveNPCtoFile(String npcName, Location location, String skinValue, String skinSignature) {

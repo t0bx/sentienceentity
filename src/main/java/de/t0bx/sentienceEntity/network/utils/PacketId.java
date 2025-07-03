@@ -1,0 +1,14 @@
+package de.t0bx.sentienceEntity.network.utils;
+
+public enum PacketId {
+    PLAYER_INFO_UPDATE,
+    PLAYER_INFO_REMOVE,
+    SPAWN_ENTITY,
+    SET_ENTITY_METADATA,
+    SET_HEAD_ROTATION,
+    UPDATE_ENTITY_ROTATION,
+    REMOVE_ENTITY,
+    TELEPORT_ENTITY,
+    INTERACT_ENTITY,
+    SET_PLAYER_TEAM;
+}

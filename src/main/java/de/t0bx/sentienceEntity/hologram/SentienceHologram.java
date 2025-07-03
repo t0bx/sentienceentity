@@ -17,32 +17,20 @@
 package de.t0bx.sentienceEntity.hologram;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
-import de.t0bx.sentienceEntity.packet.PacketPlayer;
-import de.t0bx.sentienceEntity.packet.utils.EntityType;
-import de.t0bx.sentienceEntity.packet.utils.MetadataEntry;
-import de.t0bx.sentienceEntity.packet.utils.MetadataType;
-import de.t0bx.sentienceEntity.packet.wrapper.packets.*;
+import de.t0bx.sentienceEntity.network.PacketPlayer;
+import de.t0bx.sentienceEntity.network.utils.EntityType;
+import de.t0bx.sentienceEntity.network.metadata.MetadataEntry;
+import de.t0bx.sentienceEntity.network.metadata.MetadataType;
+import de.t0bx.sentienceEntity.network.wrapper.packets.*;
 import de.t0bx.sentienceEntity.utils.ReflectionUtils;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerLevel;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_21_R3.CraftWorld;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.Method;
 import java.util.*;
 
 @Getter
@@ -100,6 +88,7 @@ public class SentienceHologram {
         for (PacketPlayer player : channels) {
             player.sendPacket(addEntityPacket);
         }
+
 
         Component component = MiniMessage.miniMessage().deserialize(line.getText());
 
@@ -193,11 +182,8 @@ public class SentienceHologram {
 
         Component component = miniMessage.deserialize(line.getText());
 
-        GsonComponentSerializer gson = GsonComponentSerializer.gson();
-        String json = gson.serialize(component);
-
         var metadata = new PacketSetEntityMetadata(line.getEntityId(), List.of(
-                new MetadataEntry(2, MetadataType.OPTIONAL_TEXT_COMPONENT, json)
+                new MetadataEntry(2, MetadataType.OPTIONAL_TEXT_COMPONENT, Optional.of(component))
         ));
 
         for (PacketPlayer player : this.channels) {

@@ -74,43 +74,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>net.md-5</groupId>
-                <artifactId>specialsource-maven-plugin</artifactId>
-                <!-- Get the latest version from https://mvnrepository.com/artifact/net.md-5/specialsource-maven-plugin -->
-                <version>2.0.4</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>remap</goal>
-                        </goals>
-                        <id>remap-obf</id>
-                        <configuration>
-                            <srgIn>org.spigotmc:minecraft-server:${remapped.version}:txt:maps-mojang</srgIn>
-                            <reverse>true</reverse>
-                            <useProjectDependencies>false</useProjectDependencies>
-                            <remappedDependencies>org.spigotmc:spigot:${remapped.version}:jar:remapped-mojang</remappedDependencies>
-                            <remappedArtifactAttached>true</remappedArtifactAttached>
-                            <remappedClassifierName>remapped-obf</remappedClassifierName>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>remap</goal>
-                        </goals>
-                        <id>remap-spigot</id>
-                        <configuration>
-                            <useProjectDependencies>false</useProjectDependencies>
-                            <inputFile>${project.build.directory}/${project.artifactId}-${project.version}-remapped-obf.jar</inputFile>
-                            <srgIn>org.spigotmc:minecraft-server:${remapped.version}:csrg:maps-spigot</srgIn>
-                            <remappedDependencies>org.spigotmc:spigot:${remapped.version}:jar:remapped-obf
-                            </remappedDependencies>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -166,20 +129,24 @@
             <version>4.1.115.Final</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot</artifactId>
-            <version>${remapped.version}</version>
-            <scope>provided</scope>
-            <classifier>remapped-mojang</classifier>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/net.kyori/adventure-nbt -->
+        <!-- For Spigot -->
+        <!-- https://mvnrepository.com/artifact/net.kyori/adventure-text-minimessage -->
         <dependency>
             <groupId>net.kyori</groupId>
-            <artifactId>adventure-nbt</artifactId>
+            <artifactId>adventure-text-minimessage</artifactId>
             <version>4.23.0</version>
-            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-legacy</artifactId>
+            <version>4.23.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-gson</artifactId>
+            <version>4.23.0</version>
         </dependency>
     </dependencies>
 </project>
