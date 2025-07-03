@@ -1,15 +1,6 @@
 # SentienceEntity
 
-A powerful Paper plugin that adds interactive NPCs with advanced features to your Minecraft server.
-
-## Legal Notice
-
-This plugin uses reflection and direct access to Minecraft server internals (NMS) and CraftBukkit classes.  
-These classes are not bundled or redistributed — they are generated using BuildTools from SpigotMC.
-
-No Mojang or Microsoft assets, classes, or proprietary code are included in this repository.
-
-This project is not affiliated with Mojang, Microsoft, or Minecraft in any way.
+A powerful Minecraft plugin that adds interactive NPCs with advanced features to your Minecraft server.
 
 ## License
 
@@ -37,7 +28,7 @@ See the full license here: [https://creativecommons.org/licenses/by-nc/4.0/](htt
 
 ## Requirements
 
-- **Paper 1.21.4**
+- **Spigot/Paper 1.21.4 +**
 
 ## Commands
 
@@ -82,7 +73,7 @@ This Project uses Maven:
 <dependency>
     <groupId>de.t0bx</groupId>
     <artifactId>SentienceEntity</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
     <scope>provided</scope>
 </dependency>
 ```
@@ -135,29 +126,33 @@ Working with the PlayerClickNPCEvent
 
 ```java
 import de.t0bx.sentienceEntity.events.PlayerClickNpcEvent;
-import de.t0bx.sentienceEntity.utils.ClickType;
+import de.t0bx.sentienceEntity.network.interact.InteractHand;
+import de.t0bx.sentienceEntity.network.interact.InteractType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-public class NPCClickListener implements Listener {
+public class NpcClickListener implements Listener {
 
     @EventHandler
-    public void onNPCClick(PlayerClickNpcEvent event) {
-        event.getClickType(); // Returns if its RIGHT_CLICK or LEFT_CLICK
+    public void onPlayerClickNpc(PlayerClickNpcEvent event) {
+        event.getInteractHand(); // Returns the Interacted Hand, MAIN_HAND, OFF_HAND or NONE
         event.getPlayer(); // The Player who interacts with the entity
         event.getNpcName(); // The npcName which the player interacts with
+        event.getInteractType(); // Returns the Interact Type, ATTACK, INTERACT or INTERACT_AT
 
         //Example
-        if (event.getClickType() == ClickType.RIGHT_CLICK) {
-            if (event.getNpcName().equalsIgnoreCase("test")) {
-                event.getPlayer().sendMessage("You've right clicked the npc with the name test!");
-            }
-        }
+        Player player = event.getPlayer();
 
-        if (event.getClickType() == ClickType.LEFT_CLICK) {
-            if (event.getNpcName().equalsIgnoreCase("test2")) {
-                event.getPlayer().sendMessage("You've left clicked the npc with the name test2!");
-            }
+        //Note if the InteractType is ATTACK the InteractHand is NONE
+        //We only want that the player uses the main hand not the offhand
+        if (event.getInteractHand() != InteractHand.MAIN_HAND) return;
+
+        //We only want right clicks on the npc
+        if (event.getInteractType() != InteractType.INTERACT) return;
+
+        if (event.getNpcName().equalsIgnoreCase("test")) {
+            player.sendMessage("You've right clicked the npc " + event.getNpcName());
         }
     }
 }

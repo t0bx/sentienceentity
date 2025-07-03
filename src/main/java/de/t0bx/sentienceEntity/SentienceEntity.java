@@ -18,20 +18,21 @@ package de.t0bx.sentienceEntity;
 
 import de.t0bx.sentienceEntity.commands.SentienceEntityCommand;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
-import de.t0bx.sentienceEntity.listener.NPCSpawnListener;
+import de.t0bx.sentienceEntity.listener.NpcSpawnListener;
 import de.t0bx.sentienceEntity.listener.PlayerMoveListener;
 import de.t0bx.sentienceEntity.listener.PlayerToggleSneakListener;
 import de.t0bx.sentienceEntity.npc.NpcsHandler;
-import de.t0bx.sentienceEntity.packet.PacketController;
-import de.t0bx.sentienceEntity.packet.channel.ChannelAccess;
-import de.t0bx.sentienceEntity.packet.channel.PaperChannelAccess;
-import de.t0bx.sentienceEntity.packet.channel.SpigotChannelAccess;
-import de.t0bx.sentienceEntity.packets.PacketInterceptor;
+import de.t0bx.sentienceEntity.network.PacketController;
+import de.t0bx.sentienceEntity.network.channel.ChannelAccess;
+import de.t0bx.sentienceEntity.network.channel.PaperChannelAccess;
+import de.t0bx.sentienceEntity.network.channel.SpigotChannelAccess;
+import de.t0bx.sentienceEntity.network.handler.PacketReceiveHandler;
 import de.t0bx.sentienceEntity.update.UpdateManager;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Team;
 
 @Getter
 public final class SentienceEntity extends JavaPlugin {
@@ -51,17 +52,21 @@ public final class SentienceEntity extends JavaPlugin {
 
     private HologramManager hologramManager;
 
-    private PacketInterceptor packetInterceptor;
+    private PacketReceiveHandler packetReceiveHandler;
 
     @Getter
     private static SentienceAPI api;
 
+    private boolean PAPER;
+
     @Override
     public void onLoad() {
         if (isPaperServer()) {
+            PAPER = true;
             ChannelAccess.setRegistry(new PaperChannelAccess());
             this.getLogger().info("SentienceEntity using PaperChannelAccess");
         } else {
+            PAPER = false;
             ChannelAccess.setRegistry(new SpigotChannelAccess());
             this.getLogger().info("SentienceEntity using SpigotChannelAccess");
         }
@@ -81,10 +86,10 @@ public final class SentienceEntity extends JavaPlugin {
 
         this.npcshandler = new NpcsHandler();
         this.hologramManager = new HologramManager();
-        this.packetInterceptor = new PacketInterceptor(this.npcshandler);
+        this.packetReceiveHandler = new PacketReceiveHandler(this.npcshandler, this.packetController);
         this.getLogger().info("Loaded " + this.npcshandler.getLoadedSize() + " NPCs.");
 
-        Bukkit.getPluginManager().registerEvents(new NPCSpawnListener(), this);
+        Bukkit.getPluginManager().registerEvents(new NpcSpawnListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerMoveListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerToggleSneakListener(), this);
         this.getCommand("se").setExecutor(new SentienceEntityCommand(this));
@@ -97,6 +102,15 @@ public final class SentienceEntity extends JavaPlugin {
     public void onDisable() {
         if (this.hologramManager != null) {
             this.hologramManager.destroyAll();
+        }
+        if (this.npcshandler != null) {
+            this.npcshandler.despawnAll();
+        }
+
+        for (Team team : Bukkit.getScoreboardManager().getMainScoreboard().getTeams()) {
+            if (team.getName().startsWith("hidden_")) {
+                team.unregister();
+            }
         }
     }
 

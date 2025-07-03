@@ -17,12 +17,11 @@
 package de.t0bx.sentienceEntity.npc;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
-import de.t0bx.sentienceEntity.packet.PacketPlayer;
-import de.t0bx.sentienceEntity.packet.utils.EntityType;
-import de.t0bx.sentienceEntity.packet.utils.MetadataEntry;
-import de.t0bx.sentienceEntity.packet.utils.MetadataType;
-import de.t0bx.sentienceEntity.packet.utils.NpcProfile;
-import de.t0bx.sentienceEntity.packet.wrapper.packets.*;
+import de.t0bx.sentienceEntity.network.PacketPlayer;
+import de.t0bx.sentienceEntity.network.metadata.MetadataEntry;
+import de.t0bx.sentienceEntity.network.metadata.MetadataType;
+import de.t0bx.sentienceEntity.network.utils.*;
+import de.t0bx.sentienceEntity.network.wrapper.packets.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
@@ -67,7 +66,7 @@ public class SentienceNPC {
         List<PacketPlayerInfoUpdate.PlayerEntry> entries = List.of(
                 new PacketPlayerInfoUpdate.PlayerEntry(
                         profile.getUuid(),
-                        "",
+                        profile.getName(),
                         profile.getProperties(),
                         0,
                         false
@@ -99,6 +98,19 @@ public class SentienceNPC {
         var metadataPacket = new PacketSetEntityMetadata(entityId, metadataEntries);
 
         packetPlayer.sendPacket(metadataPacket);
+
+        String name = "hidden_" + entityId;
+        var teamPlayerAddPacket = new PacketSetPlayerTeam(
+                name,
+                TeamMethods.CREATE_TEAM,
+                (byte) 0x01,
+                "never",
+                "never",
+                0,
+                List.of(profile.getName())
+        );
+
+        packetPlayer.sendPacket(teamPlayerAddPacket);
 
         this.channels.add(packetPlayer);
     }
@@ -257,6 +269,21 @@ public class SentienceNPC {
 
         for (PacketPlayer player : this.channels) {
             player.sendPacket(metadataPacket);
+        }
+
+        String name = "hidden_" + entityId;
+        var teamPlayerAddPacket = new PacketSetPlayerTeam(
+                name,
+                TeamMethods.CREATE_TEAM,
+                (byte) 0x01,
+                "never",
+                "never",
+                0,
+                List.of(profile.getName())
+        );
+
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(teamPlayerAddPacket);
         }
     }
 

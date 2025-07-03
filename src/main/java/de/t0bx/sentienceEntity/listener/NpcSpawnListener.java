@@ -1,0 +1,66 @@
+/**
+ * Creative Commons Attribution-NonCommercial 4.0 International Public License
+ * By using this code, you agree to the following terms:
+ * You are free to:
+ * - Share — copy and redistribute the material in any medium or format
+ * - Adapt — remix, transform, and build upon the material
+ * Under the following terms:
+ * 1. Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+ * 2. NonCommercial — You may not use the material for commercial purposes.
+ * No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+ * Full License Text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+ * ---
+ * Copyright (c) 2025 t0bx
+ * This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
+ */
+
+package de.t0bx.sentienceEntity.listener;
+
+import de.t0bx.sentienceEntity.SentienceEntity;
+import de.t0bx.sentienceEntity.hologram.HologramManager;
+import de.t0bx.sentienceEntity.npc.NpcsHandler;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+
+public class NpcSpawnListener implements Listener {
+
+    private final NpcsHandler npcsHandler;
+    private final HologramManager hologramManager;
+
+    public NpcSpawnListener() {
+        this.npcsHandler = SentienceEntity.getInstance().getNpcshandler();
+        this.hologramManager = SentienceEntity.getInstance().getHologramManager();
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        SentienceEntity.getInstance().getPacketReceiveHandler().injectPlayer(player);
+
+        this.npcsHandler.spawnAllNPCs(player);
+        this.hologramManager.showAllHolograms(player);
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        SentienceEntity.getInstance().getPacketReceiveHandler().uninjectPlayer(player);
+
+        this.npcsHandler.despawnAllNPCs(player);
+        this.hologramManager.unShowAllHolograms(player);
+        SentienceEntity.getInstance().getPacketController().removePlayer(player);
+    }
+
+    @EventHandler
+    public void onWorldSwitch(PlayerChangedWorldEvent event) {
+        Player player = event.getPlayer();
+        this.npcsHandler.despawnAllNPCs(player);
+        this.hologramManager.unShowAllHolograms(player);
+        this.npcsHandler.spawnAllNPCs(player);
+        this.hologramManager.showAllHolograms(player);
+    }
+}

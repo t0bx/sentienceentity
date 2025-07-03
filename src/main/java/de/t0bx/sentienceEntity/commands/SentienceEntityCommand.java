@@ -21,7 +21,9 @@ import de.t0bx.sentienceEntity.hologram.HologramLine;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.npc.NpcsHandler;
 import de.t0bx.sentienceEntity.npc.SentienceNPC;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -58,12 +60,12 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         if (!player.hasPermission("se.command")) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "You don't have permission to execute this command!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "You don't have permission to execute this command!"));
             return true;
         }
 
         if (SentienceEntity.getApi().isApiOnly()) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "This plugin works just as api-only!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "This plugin works just as api-only!"));
             return true;
         }
 
@@ -75,7 +77,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
         switch (args[0].toLowerCase()) {
             case "spawnnpc" -> {
                 if (args.length != 3) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se spawnnpc <Name> <Skin>"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se spawnnpc <Name> <Skin>"));
                     return true;
                 }
 
@@ -88,7 +90,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
             case "removenpc" -> {
                 if (args.length != 2) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se removenpc <Name> <Player Name>"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se removenpc <Name> <Player Name>"));
                     return true;
                 }
 
@@ -97,7 +99,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
             case "listnpc" -> {
                 if (args.length != 1) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se listnpc <dark_gray>| <gray>List all npcs"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se listnpc <dark_gray>| <gray>List all npcs"));
                     return true;
                 }
 
@@ -106,7 +108,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
             case "createhologram" -> {
                 if (args.length != 2) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se createHologram <Name> <dark_gray>| <gray>Create a Hologram for a npc"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se createHologram <Name> <dark_gray>| <gray>Create a Hologram for a npc"));
                     return true;
                 }
 
@@ -116,7 +118,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
             case "addline" -> {
                 if (args.length <= 2) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se addLine <Name> <Text> <dark_gray>| <gray>Add a line for a hologram"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se addLine <Name> <Text> <dark_gray>| <gray>Add a line for a hologram"));
                     return true;
                 }
 
@@ -127,7 +129,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
             case "setline" -> {
                 if (args.length <= 3) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se setLine <Name> <index> <Text> <dark_gray>| <gray>Updates a specific line from a hologram"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se setLine <Name> <index> <Text> <dark_gray>| <gray>Updates a specific line from a hologram"));
                     return true;
                 }
 
@@ -139,7 +141,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
             case "lines" -> {
                 if (args.length != 2) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se lines <Name> <dark_gray>| <gray>List all lines from a hologram"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se lines <Name> <dark_gray>| <gray>List all lines from a hologram"));
                     return true;
                 }
 
@@ -149,7 +151,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
             case "removeline" -> {
                 if (args.length != 3) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se removeLine <Name> <index> <dark_gray>| <gray>Removes a specific line from a hologram"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se removeLine <Name> <index> <dark_gray>| <gray>Removes a specific line from a hologram"));
                     return true;
                 }
 
@@ -160,7 +162,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
             case "removehologram" -> {
                 if (args.length != 2) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se removeHologram <Name> <dark_gray>| <gray>Removes a hologram"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se removeHologram <Name> <dark_gray>| <gray>Removes a hologram"));
                     return true;
                 }
 
@@ -175,7 +177,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
     private void handleSpawnNpc(Player player, @NotNull String npcName, @NotNull String skinName) {
         if (this.npcsHandler.doesNPCExist(npcName)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "A npc with the name '" + npcName + "' already exists!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "A npc with the name '" + npcName + "' already exists!"));
             return;
         }
 
@@ -184,192 +186,201 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
     private void handleEditNpc(Player player, @NotNull String[] args) {
         if (args.length <= 2) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldLookAtPlayer"));
-            player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldSneakWithPlayer"));
-            player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> updateLocation"));
-            player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> setSkin <Player Name>"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldLookAtPlayer"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldSneakWithPlayer"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> updateLocation"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> setSkin <Player Name>"));
             return;
         }
 
         String npcName = args[1];
         if (!this.npcsHandler.doesNPCExist(npcName)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
             return;
         }
 
         switch (args[2].toLowerCase()) {
             case "shouldlookatplayer" -> {
                 if (args.length != 3) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldLookAtPlayer"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldLookAtPlayer"));
                     return;
                 }
 
                 String response = this.npcsHandler.updateLookAtPlayer(npcName);
                 switch (response.toLowerCase()) {
-                    case "error" -> player.sendMessage(this.mm.deserialize(this.prefix + "There was an error updating the npc with the name '" + npcName + "'!"));
-                    case "true" -> player.sendMessage(this.mm.deserialize(this.prefix + "The npc '" + npcName + "' will now look at players!"));
-                    case "false" -> player.sendMessage(this.mm.deserialize(this.prefix + "The npc '" + npcName + "' will no longer look at players!"));
+                    case "error" -> sendMessage(player, this.mm.deserialize(this.prefix + "There was an error updating the npc with the name '" + npcName + "'!"));
+                    case "true" -> sendMessage(player, this.mm.deserialize(this.prefix + "The npc '" + npcName + "' will now look at players!"));
+                    case "false" -> sendMessage(player, this.mm.deserialize(this.prefix + "The npc '" + npcName + "' will no longer look at players!"));
                 }
             }
 
             case "shouldsneakwithplayer" -> {
                 if (args.length != 3) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldLookAtPlayer"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldLookAtPlayer"));
                     return;
                 }
 
                 String response = this.npcsHandler.updateSneakWithPlayer(npcName);
                 switch (response.toLowerCase()) {
-                    case "error" -> player.sendMessage(this.mm.deserialize(this.prefix + "There was an error updating the npc with the name '" + npcName + "'!"));
-                    case "true" -> player.sendMessage(this.mm.deserialize(this.prefix + "The npc '" + npcName + "' will now sneak with players!"));
-                    case "false" -> player.sendMessage(this.mm.deserialize(this.prefix + "The npc '" + npcName + "' will no longer sneak with players!"));
+                    case "error" -> sendMessage(player, this.mm.deserialize(this.prefix + "There was an error updating the npc with the name '" + npcName + "'!"));
+                    case "true" -> sendMessage(player, this.mm.deserialize(this.prefix + "The npc '" + npcName + "' will now sneak with players!"));
+                    case "false" -> sendMessage(player, this.mm.deserialize(this.prefix + "The npc '" + npcName + "' will no longer sneak with players!"));
                 }
             }
 
             case "updatelocation" -> {
                 if (args.length != 3) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldLookAtPlayer"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldLookAtPlayer"));
                     return;
                 }
 
                 this.npcsHandler.updateLocation(npcName, player.getLocation());
-                player.sendMessage(this.mm.deserialize(this.prefix + "You've updated the Location for the npc '" + npcName + "'"));
+                sendMessage(player, this.mm.deserialize(this.prefix + "You've updated the Location for the npc '" + npcName + "'"));
             }
 
             case "setskin" -> {
                 if (args.length != 4) {
-                    player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldLookAtPlayer"));
+                    sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> shouldLookAtPlayer"));
                     return;
                 }
 
                 String playerName = args[3];
                 this.npcsHandler.updateSkin(npcName, playerName, true);
-                player.sendMessage(this.mm.deserialize(this.prefix + "You've updated the skin of the npc '" + npcName + "'"));
+                sendMessage(player, this.mm.deserialize(this.prefix + "You've updated the skin of the npc '" + npcName + "'"));
             }
         }
     }
 
     private void handleRemoveNpc(Player player, @NotNull String npcName) {
         if (!this.npcsHandler.doesNPCExist(npcName)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
             return;
         }
 
         this.npcsHandler.removeNPC(npcName);
-        player.sendMessage(this.mm.deserialize(this.prefix + "You have removed the npc '" + npcName + "'."));
+        sendMessage(player, this.mm.deserialize(this.prefix + "You have removed the npc '" + npcName + "'."));
     }
 
     private void handleListNpcs(Player player) {
         if (this.npcsHandler.getNPCMap().isEmpty()) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "You haven't spawned any NPCs yet."));
+            sendMessage(player, this.mm.deserialize(this.prefix + "You haven't spawned any NPCs yet."));
             return;
         }
 
         this.npcsHandler.getNPCMap().forEach((npcName, npc) -> {
-            player.sendMessage(this.mm.deserialize(this.prefix + npcName + " | X: " + npc.getLocation().getX() + " | Y: " + npc.getLocation().getY() + " | Z: " + npc.getLocation().getZ()));
+            sendMessage(player, this.mm.deserialize(this.prefix + npcName + " | X: " + npc.getLocation().getX() + " | Y: " + npc.getLocation().getY() + " | Z: " + npc.getLocation().getZ()));
         });
     }
 
     private void handleCreateHologram(Player player, String npcName) {
         if (!this.npcsHandler.doesNPCExist(npcName)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
             return;
         }
 
         SentienceNPC npc = this.npcsHandler.getNPC(npcName);
         this.hologramManager.createHologram(npcName, npc.getLocation());
-        player.sendMessage(this.mm.deserialize(this.prefix + "You have created a hologram for the npc '" + npcName + "'."));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Use /se addLine to add a line to the hologram!"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "You have created a hologram for the npc '" + npcName + "'."));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Use /se addLine to add a line to the hologram!"));
     }
 
     private void handleAddLine(Player player, String npcName, String text) {
         if (!this.npcsHandler.doesNPCExist(npcName)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
             return;
         }
 
         this.hologramManager.show(player, npcName);
         this.hologramManager.addLine(npcName, text, true);
-        player.sendMessage(this.mm.deserialize(this.prefix + "You have added a line to the hologram for the npc '" + npcName + "'."));
+        sendMessage(player, this.mm.deserialize(this.prefix + "You have added a line to the hologram for the npc '" + npcName + "'."));
     }
 
     private void handleSetLine(Player player, String npcName, int index, String text) {
         if (!this.npcsHandler.doesNPCExist(npcName)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
             return;
         }
 
         if (!this.hologramManager.doesLineExist(npcName, index)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There is no line with the index '" + index + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There is no line with the index '" + index + "'!"));
             return;
         }
 
         this.hologramManager.updateLine(npcName, index, text);
-        player.sendMessage(this.mm.deserialize(this.prefix + "You've changed the line '" + index + "' to '" + text + "'!"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "You've changed the line '" + index + "' to '" + text + "'!"));
 
     }
 
     private void handleRemoveLine(Player player, String npcName, int index) {
         if (!this.npcsHandler.doesNPCExist(npcName)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
             return;
         }
 
         if (!this.hologramManager.doesLineExist(npcName, index)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There is no line with the index '" + index + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There is no line with the index '" + index + "'!"));
             return;
         }
 
         this.hologramManager.removeLine(npcName, index);
-        player.sendMessage(this.mm.deserialize(this.prefix + "You've removed the line with the index '" + index + "'"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "You've removed the line with the index '" + index + "'"));
     }
 
     private void handleHologramLines(Player player, String npcName) {
         if (!this.npcsHandler.doesNPCExist(npcName)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
             return;
         }
 
         Map<Integer, HologramLine> hologramLines = this.hologramManager.getHologramLines(npcName);
         if (hologramLines.isEmpty()) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There are no HologramLines for the npc '" + npcName + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There are no HologramLines for the npc '" + npcName + "'!"));
             return;
         }
 
         hologramLines.forEach((index, hologramline) -> {
-            player.sendMessage(this.mm.deserialize(this.prefix + "Index: '" + index + "', Text: '" + hologramline.getText() + "'"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "Index: '" + index + "', Text: '" + hologramline.getText() + "'"));
         });
     }
 
     private void handleRemoveHologram(Player player, String npcName) {
         if (!this.npcsHandler.doesNPCExist(npcName)) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
             return;
         }
 
         Map<Integer, HologramLine> hologramLines = this.hologramManager.getHologramLines(npcName);
         if (hologramLines.isEmpty()) {
-            player.sendMessage(this.mm.deserialize(this.prefix + "There are no HologramLines for the npc '" + npcName + "'!"));
+            sendMessage(player, this.mm.deserialize(this.prefix + "There are no HologramLines for the npc '" + npcName + "'!"));
             return;
         }
 
         this.hologramManager.removeHologram(npcName);
-        player.sendMessage(this.mm.deserialize(this.prefix + "You've removed the hologram for the npc '" + npcName + "'!"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "You've removed the hologram for the npc '" + npcName + "'!"));
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage(this.mm.deserialize(this.prefix + "NPC-Management: "));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se spawnnpc <Name> <Player Name> <dark_gray>| <gray>Spawn a new npc"));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> <dark_gray>| <gray>Edit a npc"));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se removenpc <Name> <dark_gray>| <gray>Removes a npc"));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se listnpc <dark_gray>| <gray>List all npcs"));
-        player.sendMessage(this.mm.deserialize(this.prefix + "NPC-Bound Holograms: "));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se createHologram <Name> <dark_gray>| <gray>Create a Hologram for a npc"));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se addLine <Name> <Text> <dark_gray>| <gray>Add a line for a hologram"));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se setLine <Name> <index> <Text> <dark_gray>| <gray>Updates a specific line from a hologram"));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se lines <Name> <dark_gray>| <gray>List all lines from a hologram"));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se removeLine <Name> <index> <dark_gray>| <gray>Removes a specific line from a hologram"));
-        player.sendMessage(this.mm.deserialize(this.prefix + "Usage: /se removeHologram <Name> <dark_gray>| <gray>Removes a hologram"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "NPC-Management: "));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se spawnnpc <Name> <Player Name> <dark_gray>| <gray>Spawn a new npc"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se editnpc <Name> <dark_gray>| <gray>Edit a npc"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se removenpc <Name> <dark_gray>| <gray>Removes a npc"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se listnpc <dark_gray>| <gray>List all npcs"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "NPC-Bound Holograms: "));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se createHologram <Name> <dark_gray>| <gray>Create a Hologram for a npc"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se addLine <Name> <Text> <dark_gray>| <gray>Add a line for a hologram"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se setLine <Name> <index> <Text> <dark_gray>| <gray>Updates a specific line from a hologram"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se lines <Name> <dark_gray>| <gray>List all lines from a hologram"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se removeLine <Name> <index> <dark_gray>| <gray>Removes a specific line from a hologram"));
+        sendMessage(player, this.mm.deserialize(this.prefix + "Usage: /se removeHologram <Name> <dark_gray>| <gray>Removes a hologram"));
+    }
+    
+    private void sendMessage(Player player, Component component) {
+        if (SentienceEntity.getInstance().isPAPER()) {
+            player.sendMessage(component);
+        } else {
+            String legacy = LegacyComponentSerializer.legacySection().serialize(component);
+            player.sendMessage(legacy);
+        }
     }
 
     @Override
