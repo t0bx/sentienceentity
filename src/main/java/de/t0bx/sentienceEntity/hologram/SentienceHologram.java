@@ -1,17 +1,31 @@
 /**
- *Creative Commons Attribution-NonCommercial 4.0 International Public License
- * By using this code, you agree to the following terms:
- * You are free to:
- * - Share — copy and redistribute the material in any medium or format
- * - Adapt — remix, transform, and build upon the material
- * Under the following terms:
- * 1. Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
- * 2. NonCommercial — You may not use the material for commercial purposes.
- * No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
- * Full License Text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
- * ---
- * Copyright (c) 2025 t0bx
- * This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
+ SentienceEntity API License v1.1
+ Copyright (c) 2025 (t0bx)
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use, copy, modify, and integrate the Software into their own projects, including commercial and closed-source projects, subject to the following conditions:
+
+ 1. Attribution:
+ You must give appropriate credit to the original author ("Tobias Schuster" or "t0bx"), provide a link to the source or official page if available, and indicate if changes were made. You must do so in a reasonable and visible manner, such as in your plugin.yml, README, or about page.
+
+ 2. No Redistribution or Resale:
+ You may NOT sell, redistribute, or otherwise make the original Software or modified standalone versions of it available as a product (free or paid), plugin, or downloadable file, unless you have received prior written permission from the author. This includes publishing the plugin on any marketplace (e.g., SpigotMC, MC-Market, Polymart) or including it in paid bundles.
+
+ 3. Use as Dependency/API:
+ You are allowed to use this Software as a dependency or library in your own plugin or project, including in paid products, as long as attribution is given and the Software itself is not being sold or published separately.
+
+ 4. No Misrepresentation:
+ You may not misrepresent the origin of the Software. You must clearly distinguish your own modifications from the original work. The original author's name may not be removed from the source files or documentation.
+
+ 5. License Retention:
+ This license notice and all conditions must be preserved in all copies or substantial portions of the Software.
+
+ 6. Disclaimer:
+ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
+
+ ---
+
+ Summary (non-binding):
+ You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
 package de.t0bx.sentienceEntity.hologram;
@@ -27,7 +41,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -49,6 +62,15 @@ public class SentienceHologram {
 
     private final Set<PacketPlayer> channels = new HashSet<>();
 
+    /**
+     * Constructs a new SentienceHologram with the specified entity ID, unique identifier,
+     * and base location. A SentienceHologram represents a multi-line holographic display
+     * that can be spawned at a given location.
+     *
+     * @param entityId the entity ID associated with the hologram
+     * @param uuid the unique identifier of the hologram
+     * @param baseLocation the base location at which the hologram will be displayed
+     */
     public SentienceHologram(int entityId, UUID uuid, Location baseLocation) {
         this.entityId = entityId;
         this.uuid = uuid;
@@ -58,6 +80,12 @@ public class SentienceHologram {
         this.location = baseLocation.clone();
     }
 
+    /**
+     * Adds a new line to the hologram display. The line will be positioned below the
+     * existing lines in the hologram, taking into account the vertical line spacing.
+     *
+     * @param line the text content of the new hologram line to be added
+     */
     public void addLine(String line) {
         int lineIndex = hologramLines.size();
         int lineEntityId = ReflectionUtils.generateValidMinecraftEntityId();
@@ -105,6 +133,13 @@ public class SentienceHologram {
         }
     }
 
+    /**
+     * Removes a hologram line from the hologram display based on its index.
+     * This method updates any internal structures and notifies connected players
+     * to remove the corresponding hologram line entity from their view.
+     *
+     * @param index the index of the hologram line to be removed
+     */
     public void removeLine(int index) {
         if (!hologramLines.containsKey(index)) return;
 
@@ -172,6 +207,16 @@ public class SentienceHologram {
         }
     }
 
+    /**
+     * Updates the text of a specific hologram line identified by its index.
+     * If the specified index does not exist or the hologram line is null,
+     * the method returns without making any changes. Otherwise, the line's
+     * text is updated, and the metadata associated with the hologram line
+     * is sent to all connected players to reflect the update.
+     *
+     * @param index the index of the hologram line to update
+     * @param newText the new text to set for the specified hologram line
+     */
     public void updateLine(int index, String newText) {
         if (!hologramLines.containsKey(index)) return;
 
@@ -191,6 +236,17 @@ public class SentienceHologram {
         }
     }
 
+    /**
+     * Spawns the hologram for the specified player. This includes initializing
+     * and displaying all hologram lines at the designated location for the player.
+     * If the player has already been marked as having viewed the hologram or if
+     * the player is in a different world than the hologram's location, the method
+     * exits without performing any action.
+     *
+     * @param player the {@link Player} who will view the hologram. The player's
+     *               connection is used to associate the hologram lines through
+     *               packet communication.
+     */
     public void spawn(Player player) {
         PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
 
@@ -204,6 +260,16 @@ public class SentienceHologram {
         }
     }
 
+    /**
+     * Despawns the hologram for the specified player. This method ensures that
+     * all the hologram lines associated with the hologram are removed from the
+     * player's view by sending packets to destroy the hologram entities.
+     * If the player has not previously spawned the hologram, this method exits without action.
+     *
+     * @param player the {@link Player} for whom the hologram will be despawned.
+     *               The player's associated {@link PacketPlayer} is used
+     *               to send destroy entity packets.
+     */
     public void despawn(Player player) {
         PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
 
@@ -217,6 +283,17 @@ public class SentienceHologram {
         channels.remove(packetPlayer);
     }
 
+    /**
+     * Destroys the hologram by removing all its lines and clearing associated data structures.
+     *
+     * This method iterates through all hologram lines and sends packets to the connected players
+     * instructing them to remove the entity associated with each line. After notifying all players,
+     * it clears the list of connected channels and hologram lines, effectively cleaning up resources
+     * related to this hologram.
+     *
+     * It ensures that players no longer see any remnants of the hologram and that its internal
+     * structures are reset for potential reuse or disposal.
+     */
     public void destroy() {
         for (HologramLine line : hologramLines.values()) {
             var destroyEntity = new PacketRemoveEntities(List.of(line.getEntityId()));
@@ -228,6 +305,14 @@ public class SentienceHologram {
         hologramLines.clear();
     }
 
+    /**
+     * Checks if the specified player has already spawned the hologram.
+     * This method determines if the player is included in the collection
+     * of channels that track players who have spawned the hologram.
+     *
+     * @param player the {@link PacketPlayer} to check for hologram spawning status
+     * @return {@code true} if the player has spawned the hologram, {@code false} otherwise
+     */
     public boolean hasSpawned(PacketPlayer player) {
         return this.channels.contains(player);
     }

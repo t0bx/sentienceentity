@@ -28,11 +28,39 @@
  You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
-package de.t0bx.sentienceEntity.network.channel;
+package de.t0bx.sentienceEntity.network.nbt;
 
-import io.netty.channel.Channel;
-import org.bukkit.entity.Player;
+import java.io.DataOutput;
+import java.io.IOException;
 
-public interface ChannelRegistry {
-    public Channel getChannel(Player player);
+/**
+ * Represents a Float NBT (Named Binary Tag) tag. This class is a record that encapsulates
+ * a {@code float} value and implements the {@code NbtTag} interface to facilitate serialization
+ * of the encapsulated float value.
+ *
+ * Instances of this class hold a float value and provide methods to retrieve its type
+ * identifier and write the value to a {@link DataOutput} stream.
+ */
+public record NbtFloatTag(float value) implements NbtTag {
+
+    /**
+     * Retrieves the unique type identifier for this NBT tag.
+     *
+     * @return A byte value representing the type identifier for a Float NBT tag.
+     */
+    @Override
+    public byte getTagId() {
+        return NbtTagIds.FLOAT_TAG.getId();
+    }
+
+    /**
+     * Writes the encapsulated {@code float} value to the specified {@link DataOutput} stream.
+     *
+     * @param output The {@link DataOutput} stream to which the float value will be written.
+     * @throws IOException If an I/O error occurs while writing the value to the stream.
+     */
+    @Override
+    public void write(DataOutput output) throws IOException {
+        output.writeFloat(value);
+    }
 }

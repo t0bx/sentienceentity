@@ -28,11 +28,29 @@
  You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
-package de.t0bx.sentienceEntity.network.channel;
+package de.t0bx.sentienceEntity.network.nbt;
 
-import io.netty.channel.Channel;
-import org.bukkit.entity.Player;
+import lombok.Getter;
 
-public interface ChannelRegistry {
-    public Channel getChannel(Player player);
+@Getter
+public enum NbtTagIds {
+    END_TAG((byte) 0),
+    BYTE_TAG((byte) 1),
+    SHORT_TAG((byte) 2),
+    INT_TAG((byte) 3),
+    LONG_TAG((byte) 4),
+    FLOAT_TAG((byte) 5),
+    DOUBLE_TAG((byte) 6),
+    BYTE_ARRAY_TAG((byte) 7),
+    STRING_TAG((byte) 8),
+    LIST_TAG((byte) 9),
+    COMPOUND_TAG((byte) 10),
+    INT_ARRAY_TAG((byte) 11),
+    LONG_ARRAY_TAG((byte) 12);
+
+    private final byte id;
+
+    NbtTagIds(byte id) {
+        this.id = id;
+    }
 }
