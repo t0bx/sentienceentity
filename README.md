@@ -1,29 +1,36 @@
 # SentienceEntity
 
-A powerful Paper plugin that adds interactive NPCs with advanced features to your Minecraft server.
-
-## Legal Notice
-
-This plugin uses reflection and direct access to Minecraft server internals (NMS) and CraftBukkit classes.  
-These classes are not bundled or redistributed — they are generated using BuildTools from SpigotMC.
-
-No Mojang or Microsoft assets, classes, or proprietary code are included in this repository.
-
-This project is not affiliated with Mojang, Microsoft, or Minecraft in any way.
+A powerful Minecraft plugin that adds interactive NPCs with advanced features to your Minecraft server.
 
 ## License
 
-This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)**.
+SentienceEntity API License v1.1
+Copyright (c) 2025 (t0bx)
 
-You are free to:
-- Share — copy and redistribute the code in any medium or format
-- Adapt — remix, transform, and build upon the code
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use, copy, modify, and integrate the Software into their own projects, including commercial and closed-source projects, subject to the following conditions:
 
-**Under the following terms:**
-- **Attribution** — You must give appropriate credit.
-- **NonCommercial** — You may not use the code for commercial purposes.
+1. Attribution:
+   You must give appropriate credit to the original author ("Tobias Schuster" or "t0bx"), provide a link to the source or official page if available, and indicate if changes were made. You must do so in a reasonable and visible manner, such as in your plugin.yml, README, or about page.
 
-See the full license here: [https://creativecommons.org/licenses/by-nc/4.0/](https://creativecommons.org/licenses/by-nc/4.0/)
+2. No Redistribution or Resale:
+   You may NOT sell, redistribute, or otherwise make the original Software or modified standalone versions of it available as a product (free or paid), plugin, or downloadable file, unless you have received prior written permission from the author. This includes publishing the plugin on any marketplace (e.g., SpigotMC, MC-Market, Polymart) or including it in paid bundles.
+
+3. Use as Dependency/API:
+   You are allowed to use this Software as a dependency or library in your own plugin or project, including in paid products, as long as attribution is given and the Software itself is not being sold or published separately.
+
+4. No Misrepresentation:
+   You may not misrepresent the origin of the Software. You must clearly distinguish your own modifications from the original work. The original author's name may not be removed from the source files or documentation.
+
+5. License Retention:
+   This license notice and all conditions must be preserved in all copies or substantial portions of the Software.
+
+6. Disclaimer:
+   THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
+
+ ---
+
+Summary (non-binding):
+You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
 
 ## Features
 
@@ -37,7 +44,7 @@ See the full license here: [https://creativecommons.org/licenses/by-nc/4.0/](htt
 
 ## Requirements
 
-- **Paper 1.21.4**
+- **Spigot/Paper 1.21.4 - 1.21.5 +**
 
 ## Commands
 
@@ -82,7 +89,7 @@ This Project uses Maven:
 <dependency>
     <groupId>de.t0bx</groupId>
     <artifactId>SentienceEntity</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
     <scope>provided</scope>
 </dependency>
 ```
@@ -134,30 +141,34 @@ public void example() {
 Working with the PlayerClickNPCEvent
 
 ```java
-import de.t0bx.sentienceEntity.events.PlayerClickNPCEvent;
-import de.t0bx.sentienceEntity.utils.ClickType;
+import de.t0bx.sentienceEntity.events.PlayerClickNpcEvent;
+import de.t0bx.sentienceEntity.network.interact.InteractHand;
+import de.t0bx.sentienceEntity.network.interact.InteractType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-public class NPCClickListener implements Listener {
+public class NpcClickListener implements Listener {
 
     @EventHandler
-    public void onNPCClick(PlayerClickNPCEvent event) {
-        event.getClickType(); // Returns if its RIGHT_CLICK or LEFT_CLICK
+    public void onPlayerClickNpc(PlayerClickNpcEvent event) {
+        event.getInteractHand(); // Returns the Interacted Hand, MAIN_HAND, OFF_HAND or NONE
         event.getPlayer(); // The Player who interacts with the entity
         event.getNpcName(); // The npcName which the player interacts with
+        event.getInteractType(); // Returns the Interact Type, ATTACK, INTERACT or INTERACT_AT
 
         //Example
-        if (event.getClickType() == ClickType.RIGHT_CLICK) {
-            if (event.getNpcName().equalsIgnoreCase("test")) {
-                event.getPlayer().sendMessage("You've right clicked the npc with the name test!");
-            }
-        }
-        
-        if (event.getClickType() == ClickType.LEFT_CLICK) {
-            if (event.getNpcName().equalsIgnoreCase("test2")) {
-                event.getPlayer().sendMessage("You've left clicked the npc with the name test2!");
-            }
+        Player player = event.getPlayer();
+
+        //Note if the InteractType is ATTACK the InteractHand is NONE
+        //We only want that the player uses the main hand not the offhand
+        if (event.getInteractHand() != InteractHand.MAIN_HAND) return;
+
+        //We only want right clicks on the npc
+        if (event.getInteractType() != InteractType.INTERACT) return;
+
+        if (event.getNpcName().equalsIgnoreCase("test")) {
+            player.sendMessage("You've right clicked the npc " + event.getNpcName());
         }
     }
 }
