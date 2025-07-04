@@ -1,33 +1,52 @@
 /**
- *Creative Commons Attribution-NonCommercial 4.0 International Public License
- * By using this code, you agree to the following terms:
- * You are free to:
- * - Share — copy and redistribute the material in any medium or format
- * - Adapt — remix, transform, and build upon the material
- * Under the following terms:
- * 1. Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
- * 2. NonCommercial — You may not use the material for commercial purposes.
- * No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
- * Full License Text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
- * ---
- * Copyright (c) 2025 t0bx
- * This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
+ SentienceEntity API License v1.1
+ Copyright (c) 2025 (t0bx)
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use, copy, modify, and integrate the Software into their own projects, including commercial and closed-source projects, subject to the following conditions:
+
+ 1. Attribution:
+ You must give appropriate credit to the original author ("Tobias Schuster" or "t0bx"), provide a link to the source or official page if available, and indicate if changes were made. You must do so in a reasonable and visible manner, such as in your plugin.yml, README, or about page.
+
+ 2. No Redistribution or Resale:
+ You may NOT sell, redistribute, or otherwise make the original Software or modified standalone versions of it available as a product (free or paid), plugin, or downloadable file, unless you have received prior written permission from the author. This includes publishing the plugin on any marketplace (e.g., SpigotMC, MC-Market, Polymart) or including it in paid bundles.
+
+ 3. Use as Dependency/API:
+ You are allowed to use this Software as a dependency or library in your own plugin or project, including in paid products, as long as attribution is given and the Software itself is not being sold or published separately.
+
+ 4. No Misrepresentation:
+ You may not misrepresent the origin of the Software. You must clearly distinguish your own modifications from the original work. The original author's name may not be removed from the source files or documentation.
+
+ 5. License Retention:
+ This license notice and all conditions must be preserved in all copies or substantial portions of the Software.
+
+ 6. Disclaimer:
+ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
+
+ ---
+
+ Summary (non-binding):
+ You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
 package de.t0bx.sentienceEntity;
 
 import de.t0bx.sentienceEntity.commands.SentienceEntityCommand;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
-import de.t0bx.sentienceEntity.listener.NPCSpawnListener;
+import de.t0bx.sentienceEntity.listener.NpcSpawnListener;
 import de.t0bx.sentienceEntity.listener.PlayerMoveListener;
 import de.t0bx.sentienceEntity.listener.PlayerToggleSneakListener;
-import de.t0bx.sentienceEntity.npc.NPCsHandler;
-import de.t0bx.sentienceEntity.packets.PacketInterceptor;
+import de.t0bx.sentienceEntity.npc.NpcsHandler;
+import de.t0bx.sentienceEntity.network.PacketController;
+import de.t0bx.sentienceEntity.network.channel.ChannelAccess;
+import de.t0bx.sentienceEntity.network.channel.PaperChannelAccess;
+import de.t0bx.sentienceEntity.network.channel.SpigotChannelAccess;
+import de.t0bx.sentienceEntity.network.handler.PacketReceiveHandler;
 import de.t0bx.sentienceEntity.update.UpdateManager;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Team;
 
 @Getter
 public final class SentienceEntity extends JavaPlugin {
@@ -41,35 +60,50 @@ public final class SentienceEntity extends JavaPlugin {
 
     private SkinFetcher skinFetcher;
 
-    private NPCsHandler npcshandler;
+    private PacketController packetController;
+
+    private NpcsHandler npcshandler;
 
     private HologramManager hologramManager;
 
-    private PacketInterceptor packetInterceptor;
+    private PacketReceiveHandler packetReceiveHandler;
 
     @Getter
     private static SentienceAPI api;
+
+    private boolean PAPER;
+
+    @Override
+    public void onLoad() {
+        if (isPaperServer()) {
+            PAPER = true;
+            ChannelAccess.setRegistry(new PaperChannelAccess());
+            this.getLogger().info("SentienceEntity using PaperChannelAccess");
+        } else {
+            PAPER = false;
+            ChannelAccess.setRegistry(new SpigotChannelAccess());
+            this.getLogger().info("SentienceEntity using SpigotChannelAccess");
+        }
+    }
 
     @Override
     public void onEnable() {
         instance = this;
         this.getLogger().info("Starting SentienceEntity...");
-        if (!this.isPaperServer()) {
-            this.getLogger().warning("This plugin requires Paper 1.21.4 to run properly!");
-            Bukkit.getPluginManager().disablePlugin(this);
-            return;
-        }
 
         this.updateManager = new UpdateManager(this);
         this.updateManager.checkForUpdate();
 
         this.skinFetcher = new SkinFetcher(this);
-        this.npcshandler = new NPCsHandler();
+
+        this.packetController = new PacketController();
+
+        this.npcshandler = new NpcsHandler();
         this.hologramManager = new HologramManager();
-        this.packetInterceptor = new PacketInterceptor(this.npcshandler);
+        this.packetReceiveHandler = new PacketReceiveHandler(this.npcshandler, this.packetController);
         this.getLogger().info("Loaded " + this.npcshandler.getLoadedSize() + " NPCs.");
 
-        Bukkit.getPluginManager().registerEvents(new NPCSpawnListener(), this);
+        Bukkit.getPluginManager().registerEvents(new NpcSpawnListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerMoveListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerToggleSneakListener(), this);
         this.getCommand("se").setExecutor(new SentienceEntityCommand(this));
@@ -82,6 +116,15 @@ public final class SentienceEntity extends JavaPlugin {
     public void onDisable() {
         if (this.hologramManager != null) {
             this.hologramManager.destroyAll();
+        }
+        if (this.npcshandler != null) {
+            this.npcshandler.despawnAll();
+        }
+
+        for (Team team : Bukkit.getScoreboardManager().getMainScoreboard().getTeams()) {
+            if (team.getName().startsWith("hidden_")) {
+                team.unregister();
+            }
         }
     }
 

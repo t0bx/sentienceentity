@@ -1,49 +1,46 @@
 /**
- *Creative Commons Attribution-NonCommercial 4.0 International Public License
- * By using this code, you agree to the following terms:
- * You are free to:
- * - Share — copy and redistribute the material in any medium or format
- * - Adapt — remix, transform, and build upon the material
- * Under the following terms:
- * 1. Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
- * 2. NonCommercial — You may not use the material for commercial purposes.
- * No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
- * Full License Text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
- * ---
- * Copyright (c) 2025 t0bx
- * This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
+ SentienceEntity API License v1.1
+ Copyright (c) 2025 (t0bx)
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use, copy, modify, and integrate the Software into their own projects, including commercial and closed-source projects, subject to the following conditions:
+
+ 1. Attribution:
+ You must give appropriate credit to the original author ("Tobias Schuster" or "t0bx"), provide a link to the source or official page if available, and indicate if changes were made. You must do so in a reasonable and visible manner, such as in your plugin.yml, README, or about page.
+
+ 2. No Redistribution or Resale:
+ You may NOT sell, redistribute, or otherwise make the original Software or modified standalone versions of it available as a product (free or paid), plugin, or downloadable file, unless you have received prior written permission from the author. This includes publishing the plugin on any marketplace (e.g., SpigotMC, MC-Market, Polymart) or including it in paid bundles.
+
+ 3. Use as Dependency/API:
+ You are allowed to use this Software as a dependency or library in your own plugin or project, including in paid products, as long as attribution is given and the Software itself is not being sold or published separately.
+
+ 4. No Misrepresentation:
+ You may not misrepresent the origin of the Software. You must clearly distinguish your own modifications from the original work. The original author's name may not be removed from the source files or documentation.
+
+ 5. License Retention:
+ This license notice and all conditions must be preserved in all copies or substantial portions of the Software.
+
+ 6. Disclaimer:
+ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
+
+ ---
+
+ Summary (non-binding):
+ You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
 package de.t0bx.sentienceEntity.npc;
 
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
-import io.netty.buffer.Unpooled;
+import de.t0bx.sentienceEntity.SentienceEntity;
+import de.t0bx.sentienceEntity.network.PacketPlayer;
+import de.t0bx.sentienceEntity.network.metadata.MetadataEntry;
+import de.t0bx.sentienceEntity.network.metadata.MetadataType;
+import de.t0bx.sentienceEntity.network.utils.*;
+import de.t0bx.sentienceEntity.network.wrapper.packets.*;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.protocol.game.*;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ClientInformation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.*;
-import net.minecraft.world.level.GameType;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.scores.PlayerTeam;
-import net.minecraft.world.scores.Scoreboard;
-import net.minecraft.world.scores.Team;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_21_R3.CraftServer;
-import org.bukkit.craftbukkit.v1_21_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_21_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.*;
 
 @Getter
@@ -51,7 +48,7 @@ public class SentienceNPC {
 
     private final int entityId;
 
-    private final GameProfile profile;
+    private final NpcProfile profile;
 
     @Setter
     private Location location;
@@ -62,142 +59,150 @@ public class SentienceNPC {
     @Setter
     private boolean shouldSneakWithPlayer;
 
-    private final Set<ServerPlayer> channels = new HashSet<>();
+    private final Set<PacketPlayer> channels = new HashSet<>();
 
-    public SentienceNPC(int entityId, GameProfile profile) {
+    /**
+     * Constructs a new instance of SentienceNPC with the specified entity ID and NPC profile.
+     *
+     * @param entityId the unique identifier for the NPC entity
+     * @param profile the profile containing the NPC's properties such as name, UUID, and skin information
+     */
+    public SentienceNPC(int entityId, NpcProfile profile) {
         this.entityId = entityId;
         this.profile = profile;
     }
 
+    /**
+     * Spawns the NPC for a specified player by sending necessary packets
+     * for adding a player entity, setting entity metadata, and managing team visibility.
+     *
+     * @param player the Player for whom the NPC should be spawned.
+     *               This player will receive the packets to display the NPC.
+     */
     public void spawn(Player player) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        ServerLevel nmsWorld = ((CraftWorld) player.getWorld()).getHandle();
+        PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
 
-        if (this.hasSpawned(serverPlayer)) return;
+        if (this.hasSpawned(packetPlayer)) return;
         if (this.getLocation() == null) return;
 
         if (!this.getLocation().getWorld().getName().equalsIgnoreCase(player.getWorld().getName())) return;
 
-        ServerPlayer fakePlayer = this.getFakePlayer();
+        List<PacketPlayerInfoUpdate.Action> actions = List.of(
+                PacketPlayerInfoUpdate.Action.ADD_PLAYER
+        );
+        List<PacketPlayerInfoUpdate.PlayerEntry> entries = List.of(
+                new PacketPlayerInfoUpdate.PlayerEntry(
+                        profile.getUuid(),
+                        profile.getName(),
+                        profile.getProperties(),
+                        0,
+                        false
+                )
+        );
 
-        var actions = EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER);
-        try {
-            Constructor<ClientboundPlayerInfoUpdatePacket> packetConstructor =
-                    ClientboundPlayerInfoUpdatePacket.class.getDeclaredConstructor(RegistryFriendlyByteBuf.class);
-            packetConstructor.setAccessible(true);
+        var infoUpdatePacket = new PacketPlayerInfoUpdate(actions, entries);
 
-            RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), ((CraftServer) Bukkit.getServer()).getServer().registryAccess());
-            buf.writeEnumSet(actions, ClientboundPlayerInfoUpdatePacket.Action.class);
-            buf.writeCollection(Collections.singletonList(this.getPlayerInfo()), (buffer, entry) -> {
-                buffer.writeUUID(entry.profileId());
+        packetPlayer.sendPacket(infoUpdatePacket);
 
-                for (ClientboundPlayerInfoUpdatePacket.Action action : actions) {
-                    try {
-                        Field writerField = action.getClass().getDeclaredField("j");
-                        writerField.setAccessible(true);
-
-                        Object writer = writerField.get(action);
-                        ClientboundPlayerInfoUpdatePacket.Action.Writer writeFunc = (ClientboundPlayerInfoUpdatePacket.Action.Writer) writer;
-                        writeFunc.write((RegistryFriendlyByteBuf) buffer, entry);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-
-            var infoUpdatePacket = packetConstructor.newInstance(buf);
-            serverPlayer.connection.send(infoUpdatePacket);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-
-        var addEntityPacket = new ClientboundAddEntityPacket(
+        var addEntityPacket = new PacketSpawnEntity(
                 entityId,
-                fakePlayer.getUUID(),
-                this.location.getX(),
-                this.location.getY(),
-                this.location.getZ(),
-                this.location.getPitch(),
-                this.location.getYaw(),
+                profile.getUuid(),
                 EntityType.PLAYER,
+                location,
+                location.getYaw(),
                 0,
-                new Vec3(0, 0, 0),
-                this.location.getYaw()
+                (short) 0,
+                (short) 0,
+                (short) 0
         );
 
-        serverPlayer.connection.send(addEntityPacket);
+        packetPlayer.sendPacket(addEntityPacket);
 
-        var metadata = new ClientboundSetEntityDataPacket(
-                entityId,
-                List.of(new SynchedEntityData.DataValue<>(17, EntityDataSerializers.BYTE, (byte) 127))
+        List<MetadataEntry> metadataEntries = List.of(
+                new MetadataEntry(17, MetadataType.BYTE, (byte) 127)
         );
-        serverPlayer.connection.send(metadata);
 
-        Scoreboard scoreboard = nmsWorld.getScoreboard();
-        PlayerTeam team = scoreboard.getPlayerTeam("hidden_" + fakePlayer.getId());
-        if (team == null) {
-            team = scoreboard.addPlayerTeam("hidden_" + fakePlayer.getId());
-        }
-        team.setNameTagVisibility(Team.Visibility.NEVER);
-        scoreboard.addPlayerToTeam(fakePlayer.getScoreboardName(), team);
+        var metadataPacket = new PacketSetEntityMetadata(entityId, metadataEntries);
 
-        var teamPacket = ClientboundSetPlayerTeamPacket.createAddOrModifyPacket(team, true);
-        serverPlayer.connection.send(teamPacket);
+        packetPlayer.sendPacket(metadataPacket);
 
-        this.channels.add(serverPlayer);
+        String name = "hidden_" + entityId;
+        var teamPlayerAddPacket = new PacketSetPlayerTeam(
+                name,
+                TeamMethods.CREATE_TEAM,
+                (byte) 0x01,
+                "never",
+                "never",
+                0,
+                List.of(profile.getName())
+        );
+
+        packetPlayer.sendPacket(teamPlayerAddPacket);
+
+        this.channels.add(packetPlayer);
     }
 
+    /**
+     * Updates the rotation of the NPC by setting its yaw and pitch, and sends
+     * the corresponding rotation packets to all tracked players. This updates
+     * both the entity's overall rotation and its head orientation.
+     *
+     * @param yaw the yaw angle of the NPC, representing its rotation around the vertical axis in degrees
+     * @param pitch the pitch angle of the NPC, representing its rotation around the lateral axis in degrees
+     */
     public void updateRotation(float yaw, float pitch) {
         this.getLocation().setYaw(yaw);
         this.getLocation().setPitch(pitch);
 
-        byte yawByte = this.toRotationByte(yaw);
-        byte pitchByte = this.toRotationByte(pitch);
-
-        var rotationPacket = new ClientboundMoveEntityPacket.Rot(
+        var rotationPacket = new PacketUpdateEntityRotation(
                 entityId,
-                yawByte,
-                pitchByte,
+                yaw,
+                pitch,
                 true
         );
-        try {
-            Constructor<ClientboundRotateHeadPacket> headPacketConstructor =
-                    ClientboundRotateHeadPacket.class.getDeclaredConstructor(FriendlyByteBuf.class);
-            headPacketConstructor.setAccessible(true);
 
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeVarInt(entityId);
-            buf.writeByte(yawByte);
+        var headRotationPacket = new PacketSetHeadRotation(entityId, yaw);
 
-            var entityHead = headPacketConstructor.newInstance(buf);
-            for (ServerPlayer player : this.channels) {
-                player.connection.send(rotationPacket);
-                player.connection.send(entityHead);
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(rotationPacket);
+            player.sendPacket(headRotationPacket);
         }
     }
 
+    /**
+     * Updates the sneaking state of the NPC for a specific player and sends a metadata packet
+     * to reflect the new state. The NPC's pose metadata is set to indicate whether the NPC
+     * is sneaking or not based on the player's sneaking state.
+     *
+     * @param player the {@link Player} for whom the NPC's sneaking state is being updated.
+     */
     public void updateSneaking(Player player) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        if (!this.hasSpawned(serverPlayer)) return;
+        PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
+        if (!this.hasSpawned(packetPlayer)) return;
 
         boolean playerSneaking = player.isSneaking();
-        SynchedEntityData.DataValue<?> dataValue;
+        MetadataEntry entry;
         if (!playerSneaking) {
-            dataValue = new SynchedEntityData.DataValue<>(6, EntityDataSerializers.POSE, Pose.CROUCHING);
+            entry = new MetadataEntry(6, MetadataType.POSE, 5);
         } else {
-            dataValue = new SynchedEntityData.DataValue<>(6, EntityDataSerializers.POSE, Pose.STANDING);
+            entry = new MetadataEntry(6, MetadataType.POSE, 0);
         }
 
-        var metadataPacket = new ClientboundSetEntityDataPacket(this.getEntityId(), Collections.singletonList(dataValue));
-        serverPlayer.connection.send(metadataPacket);
+        var metadataPacket = new PacketSetEntityMetadata(this.getEntityId(), Collections.singletonList(entry));
+        packetPlayer.sendPacket(metadataPacket);
     }
 
+    /**
+     * Updates the NPC's rotation to look at the specified player's eyes. The method calculates
+     * the yaw and pitch required to align the NPC's head and body towards the player and
+     * sends the corresponding rotation packets to update the NPC's orientation.
+     *
+     * @param player the {@link Player} whose position the NPC will look at. The NPC's
+     *               rotation will be adjusted to face this player's eye location.
+     */
     public void updateLookingAtPlayer(Player player) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        if (!this.hasSpawned(serverPlayer)) return;
+        PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
+        if (!this.hasSpawned(packetPlayer)) return;
 
         Location npcLocation = this.getLocation().clone().add(0, 1.62, 0);
         Location playerEyeLocation = player.getEyeLocation();
@@ -214,197 +219,175 @@ public class SentienceNPC {
 
         yaw = this.normalizeYaw(yaw);
 
-        byte yawByte = this.toRotationByte(yaw);
-        byte pitchByte = this.toRotationByte(pitch);
-
-        var entityRotation = new ClientboundMoveEntityPacket.Rot(
+        var entityRotation = new PacketUpdateEntityRotation(
                 entityId,
-                yawByte,
-                pitchByte,
+                yaw,
+                pitch,
                 true
         );
-        serverPlayer.connection.send(entityRotation);
 
-        try {
-            Constructor<ClientboundRotateHeadPacket> headPacketConstructor =
-                    ClientboundRotateHeadPacket.class.getDeclaredConstructor(FriendlyByteBuf.class);
-            headPacketConstructor.setAccessible(true);
+        packetPlayer.sendPacket(entityRotation);
 
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeVarInt(entityId);
-            buf.writeByte(yawByte);
-
-            var entityHead = headPacketConstructor.newInstance(buf);
-            serverPlayer.connection.send(entityHead);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
+        var headRotationPacket = new PacketSetHeadRotation(entityId, yaw);
+        packetPlayer.sendPacket(headRotationPacket);
     }
 
+    /**
+     * Despawns the NPC for a specified player by sending a packet that instructs
+     * the client to remove the entity represented by this NPC. This removes the NPC
+     * from the player's view. If the NPC has not been spawned for the player, the
+     * method returns without performing any action.
+     *
+     * @param player the Player for whom the NPC should be despawned. This player
+     *               will receive the packet to remove the NPC entity.
+     */
     public void despawn(Player player) {
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
-        if (!this.hasSpawned(serverPlayer)) return;
+        PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
+        if (!this.hasSpawned(packetPlayer)) return;
 
-        var removeEntitiesPacket = new ClientboundRemoveEntitiesPacket(this.getEntityId());
-        serverPlayer.connection.send(removeEntitiesPacket);
-        this.channels.remove(serverPlayer);
+        var removeEntityPacket = new PacketRemoveEntities(List.of(this.getEntityId()));
+        packetPlayer.sendPacket(removeEntityPacket);
+        this.channels.remove(packetPlayer);
     }
 
+    /**
+     * Despawns the NPC for all players it is currently visible to. This method sends a
+     * {@link PacketRemoveEntities} packet to each {@link PacketPlayer} representing the players
+     * tracking the NPC, instructing their clients to remove the NPC entity. Once the packets
+     * are sent, the list of channels representing the players tracking the NPC is cleared.
+     */
     public void despawnAll() {
-        var removeEntitiesPacket = new ClientboundRemoveEntitiesPacket(this.getEntityId());
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(removeEntitiesPacket);
+        var removeEntitiesPacket = new PacketRemoveEntities(List.of(this.getEntityId()));
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(removeEntitiesPacket);
         }
         this.channels.clear();
     }
 
+    /**
+     * Teleports the NPC to the specified location and notifies all players currently tracking it
+     * by sending a teleport packet. Updates the NPC's position both on the server and for
+     * the client-side representation.
+     *
+     * @param location the {@code Location} object representing the new position of the NPC.
+     *                 This includes the coordinates, orientation (yaw and pitch), and world information.
+     */
     public void teleport(Location location) {
         this.setLocation(location);
-        var entityTeleportPacket = new ClientboundTeleportEntityPacket(this.getEntityId(),
-                new PositionMoveRotation(
-                        new Vec3(
-                        location.getX(),
-                        location.getY(),
-                        location.getZ()),
-                        new Vec3(0, 0, 0),
-                        location.getYaw(),
-                        location.getPitch()
-                ),
-                Collections.emptySet(),
-                true);
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(entityTeleportPacket);
+        var entityTeleportPacket = new PacketTeleportEntity(
+                this.getEntityId(),
+                location,
+                0, 0, 0,
+                true
+        );
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(entityTeleportPacket);
         }
     }
 
+    /**
+     * Updates the skin of the NPC by modifying its profile properties and re-sending
+     * the necessary packets to all players tracking this NPC. The method involves
+     * removing the current entity, updating its texture properties with the new skin,
+     * and re-adding the entity with updated properties to the players' client views.
+     *
+     * @param skinValue the base64-encoded value of the new skin texture to be applied
+     *                  to the NPC. This value typically includes a URL to the texture.
+     * @param skinSignature the signature for the texture value, used to verify the
+     *                      authenticity of the skin data.
+     */
     public void changeSkin(String skinValue, String skinSignature) {
-        var removePacket = new ClientboundPlayerInfoRemovePacket(Collections.singletonList(this.getProfile().getId()));
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(removePacket);
+        var removePacket = new PacketPlayerInfoRemove(Collections.singletonList(this.getProfile().getUuid()));
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(removePacket);
         }
 
-        var destroyEntityPacket = new ClientboundRemoveEntitiesPacket(this.getEntityId());
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(destroyEntityPacket);
+        var removeEntitiesPacket = new PacketRemoveEntities(List.of(this.getEntityId()));
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(removeEntitiesPacket);
         }
 
         this.getProfile().getProperties().clear();
-        this.getProfile().getProperties().put("textures", new Property("textures", skinValue, skinSignature));
+        this.getProfile().getProperties().add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
 
-        ServerPlayer fakePlayer = this.getFakePlayer();
+        List<PacketPlayerInfoUpdate.Action> actions = List.of(
+                PacketPlayerInfoUpdate.Action.ADD_PLAYER
+        );
+        List<PacketPlayerInfoUpdate.PlayerEntry> entries = List.of(
+                new PacketPlayerInfoUpdate.PlayerEntry(
+                        profile.getUuid(),
+                        "",
+                        profile.getProperties(),
+                        0,
+                        false
+                )
+        );
 
-        var actions = EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER);
-        try {
-            Constructor<ClientboundPlayerInfoUpdatePacket> packetConstructor =
-                    ClientboundPlayerInfoUpdatePacket.class.getDeclaredConstructor(RegistryFriendlyByteBuf.class);
-            packetConstructor.setAccessible(true);
+        var infoUpdatePacket = new PacketPlayerInfoUpdate(actions, entries);
 
-            RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), ((CraftServer) Bukkit.getServer()).getServer().registryAccess());
-            buf.writeEnumSet(actions, ClientboundPlayerInfoUpdatePacket.Action.class);
-            buf.writeCollection(Collections.singletonList(this.getPlayerInfo()), (buffer, entry) -> {
-                buffer.writeUUID(entry.profileId());
-
-                for (ClientboundPlayerInfoUpdatePacket.Action action : actions) {
-                    try {
-                        Field writerField = action.getClass().getDeclaredField("j");
-                        writerField.setAccessible(true);
-
-                        Object writer = writerField.get(action);
-                        ClientboundPlayerInfoUpdatePacket.Action.Writer writeFunc = (ClientboundPlayerInfoUpdatePacket.Action.Writer) writer;
-                        writeFunc.write((RegistryFriendlyByteBuf) buffer, entry);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-
-            var infoUpdatePacket = packetConstructor.newInstance(buf);
-            for (ServerPlayer player : this.channels) {
-                player.connection.send(infoUpdatePacket);
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(infoUpdatePacket);
         }
 
-        var addEntityPacket = new ClientboundAddEntityPacket(
+        var addEntityPacket = new PacketSpawnEntity(
                 entityId,
-                fakePlayer.getUUID(),
-                this.location.getX(),
-                this.location.getY(),
-                this.location.getZ(),
-                this.location.getPitch(),
-                this.location.getYaw(),
+                profile.getUuid(),
                 EntityType.PLAYER,
+                location,
+                location.getYaw(),
                 0,
-                new Vec3(0, 0, 0),
-                this.location.getYaw()
+                (short) 0,
+                (short) 0,
+                (short) 0
         );
 
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(addEntityPacket);
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(addEntityPacket);
         }
 
-        var metadata = new ClientboundSetEntityDataPacket(
-                entityId,
-                List.of(new SynchedEntityData.DataValue<>(17, EntityDataSerializers.BYTE, (byte) 127))
+        List<MetadataEntry> metadataEntries = List.of(
+                new MetadataEntry(17, MetadataType.BYTE, (byte) 127)
         );
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(metadata);
+
+        var metadataPacket = new PacketSetEntityMetadata(entityId, metadataEntries);
+
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(metadataPacket);
         }
 
-        ServerLevel nmsWorld = ((CraftWorld) this.getLocation().getWorld()).getHandle();
-        Scoreboard scoreboard = nmsWorld.getScoreboard();
-        PlayerTeam team = scoreboard.getPlayerTeam("hidden_" + fakePlayer.getId());
-        if (team == null) {
-            team = scoreboard.addPlayerTeam("hidden_" + fakePlayer.getId());
-        }
-        team.setNameTagVisibility(Team.Visibility.NEVER);
-        scoreboard.addPlayerToTeam(fakePlayer.getScoreboardName(), team);
+        String name = "hidden_" + entityId;
+        var teamPlayerAddPacket = new PacketSetPlayerTeam(
+                name,
+                TeamMethods.CREATE_TEAM,
+                (byte) 0x01,
+                "never",
+                "never",
+                0,
+                List.of(profile.getName())
+        );
 
-        var teamPacket = ClientboundSetPlayerTeamPacket.createAddOrModifyPacket(team, true);
-        for (ServerPlayer player : this.channels) {
-            player.connection.send(teamPacket);
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(teamPlayerAddPacket);
         }
     }
 
-    public boolean hasSpawned(ServerPlayer serverPlayer) {
-        return this.channels.contains(serverPlayer);
-    }
-
-    private ServerPlayer getFakePlayer() {
-        ServerLevel nmsWorld = ((CraftWorld) this.getLocation().getWorld()).getHandle();
-        return new ServerPlayer(
-                ((CraftServer) Bukkit.getServer()).getServer(),
-                nmsWorld,
-                profile,
-                ClientInformation.createDefault()
-        );
-    }
-
-    private ClientboundPlayerInfoUpdatePacket.Entry getPlayerInfo() {
-        return new ClientboundPlayerInfoUpdatePacket.Entry(
-                this.profile.getId(),
-                this.profile,
-                false,
-                0,
-                GameType.DEFAULT_MODE,
-                null,
-                true,
-                0,
-                null
-        );
+    /**
+     * Checks whether the specified {@code PacketPlayer} has the NPC spawned for them.
+     * The method determines if the {@code PacketPlayer} is included in the list of
+     * channels currently tracking this NPC.
+     *
+     * @param packetPlayer the {@code PacketPlayer} instance representing the player
+     *                     for whom to check if the NPC has been spawned.
+     * @return {@code true} if the specified {@code PacketPlayer} has the NPC spawned,
+     *         {@code false} otherwise.
+     */
+    public boolean hasSpawned(PacketPlayer packetPlayer) {
+        return this.channels.contains(packetPlayer);
     }
 
     private float normalizeYaw(float yaw) {
         yaw %= 360;
         if (yaw < 0) yaw += 360;
         return yaw;
-    }
-
-    private byte toRotationByte(float degrees) {
-        degrees = degrees % 360;
-        if (degrees < 0) degrees += 360;
-
-        return (byte) (degrees * 256.0F / 360.0F);
     }
 }
