@@ -28,11 +28,46 @@
  You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
-package de.t0bx.sentienceEntity.network.channel;
+package de.t0bx.sentienceEntity.network.nbt;
 
-import io.netty.channel.Channel;
-import org.bukkit.entity.Player;
+import java.io.DataOutput;
+import java.io.IOException;
 
-public interface ChannelRegistry {
-    public Channel getChannel(Player player);
+/**
+ * Represents an NBT (Named Binary Tag) tag for storing an array of integers. This class is a record
+ * that encapsulates an array of integers and implements the {@code NbtTag} interface to facilitate
+ * serialization of the integer array in compliance with the NBT format.
+ *
+ * Instances of this record hold an array of integers as their value and provide methods to retrieve
+ * the tag's type identifier and write the tag's data to a {@code DataOutput} stream.
+ */
+public record NbtIntArrayTag(int[] values) implements NbtTag{
+
+    /**
+     * Retrieves the unique identifier for the INT_ARRAY_TAG type of NBT tag.
+     *
+     * @return a byte value representing the type identifier for the INT_ARRAY_TAG
+     */
+    @Override
+    public byte getTagId() {
+        return NbtTagIds.INT_ARRAY_TAG.getId();
+    }
+
+    /**
+     * Writes the data encapsulated within this NBT tag to the specified {@link DataOutput} stream,
+     * including the tag type and the array of integers.
+     *
+     * The output starts with the length of the integer array, followed by each integer value in
+     * the array being written sequentially.
+     *
+     * @param output the {@code DataOutput} stream to which the integer array data will be written
+     * @throws IOException if an I/O error occurs while writing to the stream
+     */
+    @Override
+    public void write(DataOutput output) throws IOException {
+        output.writeInt(values.length);
+        for (int i : values) {
+            output.writeInt(i);
+        }
+    }
 }

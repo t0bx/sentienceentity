@@ -28,11 +28,44 @@
  You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
-package de.t0bx.sentienceEntity.network.channel;
+package de.t0bx.sentienceEntity.network.nbt;
 
-import io.netty.channel.Channel;
-import org.bukkit.entity.Player;
+import java.io.DataOutput;
+import java.io.IOException;
 
-public interface ChannelRegistry {
-    public Channel getChannel(Player player);
+/**
+ * Represents a Long Array NBT (Named Binary Tag) tag. This class is a record that encapsulates
+ * an array of {@code long} values and implements the {@code NbtTag} interface to facilitate
+ * serialization of the encapsulated long array.
+ *
+ * Instances of this class provide methods to retrieve the type identifier of the Long Array NBT tag
+ * and to serialize the array data into a {@link DataOutput} stream.
+ */
+public record NbtLongArrayTag(long[] values) implements NbtTag {
+
+    /**
+     * Retrieves the type identifier for the Long Array NBT (Named Binary Tag) type.
+     *
+     * @return a byte value representing the type identifier for the Long Array NBT tag.
+     */
+    @Override
+    public byte getTagId() {
+        return NbtTagIds.LONG_ARRAY_TAG.getId();
+    }
+
+    /**
+     * Writes the contents of this Long Array NBT tag to the provided {@link DataOutput} stream.
+     * The method first writes the length of the array as an integer, followed by each long
+     * value in the array.
+     *
+     * @param output the {@code DataOutput} stream to which the tag data will be written
+     * @throws IOException if an I/O error occurs while writing to the stream
+     */
+    @Override
+    public void write(DataOutput output) throws IOException {
+        output.writeInt(values.length);
+        for (long l : values) {
+            output.writeLong(l);
+        }
+    }
 }

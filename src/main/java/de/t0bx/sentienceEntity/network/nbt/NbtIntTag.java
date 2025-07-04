@@ -28,11 +28,39 @@
  You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
-package de.t0bx.sentienceEntity.network.channel;
+package de.t0bx.sentienceEntity.network.nbt;
 
-import io.netty.channel.Channel;
-import org.bukkit.entity.Player;
+import java.io.DataOutput;
+import java.io.IOException;
 
-public interface ChannelRegistry {
-    public Channel getChannel(Player player);
+/**
+ * Represents an Integer NBT (Named Binary Tag) tag. This class is a record that encapsulates
+ * an {@code int} value and implements the {@code NbtTag} interface to facilitate serialization
+ * of the encapsulated integer value.
+ *
+ * Instances of this class hold an integer value and provide methods to retrieve its type
+ * identifier and write the value to a {@link DataOutput} stream.
+ */
+public record NbtIntTag(int value) implements NbtTag {
+
+    /**
+     * Retrieves the unique identifier for the Integer NBT tag type.
+     *
+     * @return the byte value representing the type identifier for an Integer NBT tag
+     */
+    @Override
+    public byte getTagId() {
+        return NbtTagIds.INT_TAG.getId();
+    }
+
+    /**
+     * Writes the encapsulated {@code int} value to the specified {@link DataOutput} stream.
+     *
+     * @param output The {@link DataOutput} stream to which the integer value will be written.
+     * @throws IOException If an I/O error occurs during the write operation.
+     */
+    @Override
+    public void write(DataOutput output) throws IOException {
+        output.writeInt(value);
+    }
 }

@@ -28,11 +28,32 @@
  You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
-package de.t0bx.sentienceEntity.network.channel;
+package de.t0bx.sentienceEntity.network.nbt;
 
-import io.netty.channel.Channel;
-import org.bukkit.entity.Player;
+import java.io.DataOutput;
+import java.io.IOException;
 
-public interface ChannelRegistry {
-    public Channel getChannel(Player player);
+public class NbtEndTag implements NbtTag {
+
+    /**
+     * Retrieves the unique identifier for the End Tag type of NBT tag.
+     *
+     * @return a byte value representing the type identifier for the End Tag
+     */
+    @Override
+    public byte getTagId() {
+        return NbtTagIds.END_TAG.getId();
+    }
+
+    /**
+     * Writes the NBT End Tag data to the provided {@link DataOutput} stream.
+     * Since the End Tag does not contain any additional data, this implementation
+     * performs no operation on the output.
+     *
+     * @param output the {@code DataOutput} stream where the tag data would be written
+     * @throws IOException if an I/O error occurs while writing to the stream
+     */
+    @Override
+    public void write(DataOutput output) throws IOException {
+    }
 }

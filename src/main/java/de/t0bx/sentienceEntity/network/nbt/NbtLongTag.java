@@ -28,11 +28,39 @@
  You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
-package de.t0bx.sentienceEntity.network.channel;
+package de.t0bx.sentienceEntity.network.nbt;
 
-import io.netty.channel.Channel;
-import org.bukkit.entity.Player;
+import java.io.DataOutput;
+import java.io.IOException;
 
-public interface ChannelRegistry {
-    public Channel getChannel(Player player);
+/**
+ * Represents a Long NBT (Named Binary Tag) tag. This class is a record that encapsulates
+ * a {@code long} value and implements the {@code NbtTag} interface to facilitate serialization
+ * of the encapsulated long value.
+ *
+ * Instances of this class hold a long value and provide methods to retrieve its type
+ * identifier and write the value to a {@link DataOutput} stream.
+ */
+public record NbtLongTag(long value) implements NbtTag {
+
+    /**
+     * Retrieves the unique identifier for the Long Tag type of NBT tag.
+     *
+     * @return a byte value representing the type identifier for the Long Tag
+     */
+    @Override
+    public byte getTagId() {
+        return NbtTagIds.LONG_TAG.getId();
+    }
+
+    /**
+     * Writes the encapsulated {@code long} value to the specified {@link DataOutput} stream.
+     *
+     * @param output The {@link DataOutput} stream to which the long value will be written.
+     * @throws IOException If an I/O error occurs during the write operation.
+     */
+    @Override
+    public void write(DataOutput output) throws IOException {
+        output.writeLong(value);
+    }
 }

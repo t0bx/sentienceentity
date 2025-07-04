@@ -28,11 +28,41 @@
  You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
-package de.t0bx.sentienceEntity.network.channel;
+package de.t0bx.sentienceEntity.network.nbt;
 
-import io.netty.channel.Channel;
-import org.bukkit.entity.Player;
+import java.io.DataOutput;
+import java.io.IOException;
 
-public interface ChannelRegistry {
-    public Channel getChannel(Player player);
+/**
+ * Represents a tag that stores an array of bytes in the NBT format.
+ * This tag provides mechanisms for retrieving its unique tag ID and
+ * for serializing its data to a {@link DataOutput} stream. The internal
+ * byte array is immutable as it is encapsulated using a record.
+ *
+ * This implementation adheres to the {@link NbtTag} interface, making it
+ * compatible with the broader system of tag handling in the NBT structure.
+ */
+public record NbtByteArrayTag(byte[] bytes) implements NbtTag {
+    /**
+     * Retrieves the unique identifier associated with the BYTE_ARRAY_TAG type in the NbtTagIds enumeration.
+     *
+     * @return the byte value representing the ID of the BYTE_ARRAY_TAG.
+     */
+    @Override
+    public byte getTagId() {
+        return NbtTagIds.BYTE_ARRAY_TAG.getId();
+    }
+
+    /**
+     * Writes the serialized byte array tag data to the provided {@link DataOutput} stream.
+     * The method writes the length of the byte array followed by its content.
+     *
+     * @param output the output stream to write the byte array tag data
+     * @throws IOException if an I/O error occurs during writing
+     */
+    @Override
+    public void write(DataOutput output) throws IOException {
+        output.writeInt(bytes.length);
+        output.write(bytes);
+    }
 }
