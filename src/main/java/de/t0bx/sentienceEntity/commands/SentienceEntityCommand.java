@@ -415,8 +415,22 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
                 }
             }
 
-            case "editnpc", "removenpc", "createhologram", "removehologram", "lines" -> {
+            case "removenpc", "createhologram", "removehologram", "lines" -> {
                 return npcNames;
+            }
+
+            case "editnpc" -> {
+                if (args.length == 2) {
+                    return npcNames;
+                } else if (args.length == 3) {
+                    return List.of("shouldLookAtPlayer", "shouldSneakWithPlayer", "updateLocation", "setSkin");
+                } else if (args.length == 4) {
+                    if (args[2].equalsIgnoreCase("setSkin")) {
+                        return Collections.singletonList("<Player Name>");
+                    } else {
+                        return Collections.emptyList();
+                    }
+                }
             }
 
             case "addline" -> {

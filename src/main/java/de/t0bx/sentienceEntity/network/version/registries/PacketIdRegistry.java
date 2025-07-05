@@ -55,18 +55,25 @@ public class PacketIdRegistry {
         v1214.put(PacketId.SET_PLAYER_TEAM, 0x67);
         REGISTRY.put(ProtocolVersion.V1_21_4, v1214);
 
-        var v1215 = new EnumMap<PacketId, Integer>(PacketId.class);
-        v1215.put(PacketId.PLAYER_INFO_UPDATE, 0x3F);
-        v1215.put(PacketId.PLAYER_INFO_REMOVE, 0x3E);
-        v1215.put(PacketId.SPAWN_ENTITY, 0x01);
-        v1215.put(PacketId.SET_ENTITY_METADATA, 0x5C);
-        v1215.put(PacketId.SET_HEAD_ROTATION, 0x4C);
-        v1215.put(PacketId.UPDATE_ENTITY_ROTATION, 0x31);
-        v1215.put(PacketId.REMOVE_ENTITY, 0x46);
-        v1215.put(PacketId.TELEPORT_ENTITY, 0x1F);
-        v1215.put(PacketId.INTERACT_ENTITY, 0x18);
-        v1215.put(PacketId.SET_PLAYER_TEAM, 0x66);
+        var v1215 = cloneWithChanges(v1214, Map.of(
+                PacketId.PLAYER_INFO_UPDATE, 0x3F,
+                PacketId.PLAYER_INFO_REMOVE, 0x3E,
+                PacketId.SET_ENTITY_METADATA, 0x5C,
+                PacketId.SET_HEAD_ROTATION, 0x4C,
+                PacketId.UPDATE_ENTITY_ROTATION, 0x31,
+                PacketId.REMOVE_ENTITY, 0x46,
+                PacketId.TELEPORT_ENTITY, 0x1F,
+                PacketId.SET_PLAYER_TEAM, 0x66
+        ));
         REGISTRY.put(ProtocolVersion.V1_21_5, v1215);
+
+        var v1216 = cloneWithChanges(v1215, Map.of(
+                PacketId.INTERACT_ENTITY, 0x19
+        ));
+        REGISTRY.put(ProtocolVersion.V1_21_6, v1216);
+
+        // No changes for 1_21_7 from 1_21_6
+        REGISTRY.put(ProtocolVersion.V1_21_7, v1216);
     }
 
     /**
@@ -86,5 +93,12 @@ public class PacketIdRegistry {
             throw new IllegalArgumentException("No packet mapping for packet id " + packetId + " in version " + version);
         }
         return map.get(packetId);
+    }
+
+    private static EnumMap<PacketId, Integer> cloneWithChanges(EnumMap<PacketId, Integer> base,
+                                                               Map<PacketId, Integer> changes) {
+        var clone = new EnumMap<>(base);
+        clone.putAll(changes);
+        return clone;
     }
 }

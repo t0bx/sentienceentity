@@ -44,7 +44,7 @@ You may use this plugin in your projects, even commercially, but you may not res
 
 ## Requirements
 
-- **Spigot/Paper 1.21.4 - 1.21.5 +**
+- **Spigot/Paper 1.21.4 - 1.21.7 +**
 
 ## Commands
 
@@ -89,7 +89,7 @@ This Project uses Maven:
 <dependency>
     <groupId>de.t0bx</groupId>
     <artifactId>SentienceEntity</artifactId>
-    <version>1.6</version>
+    <version>1.7</version>
     <scope>provided</scope>
 </dependency>
 ```
