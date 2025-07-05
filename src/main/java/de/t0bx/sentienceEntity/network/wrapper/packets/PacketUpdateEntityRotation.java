@@ -74,6 +74,7 @@ public class PacketUpdateEntityRotation implements PacketWrapper {
         ByteBuf buf = Unpooled.buffer();
 
         PacketUtils.writeVarInt(buf, packetId);
+
         PacketUtils.writeVarInt(buf, entityId);
         PacketUtils.writeAngle(buf, yaw);
         PacketUtils.writeAngle(buf, pitch);
