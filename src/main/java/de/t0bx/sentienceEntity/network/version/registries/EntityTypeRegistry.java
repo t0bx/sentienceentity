@@ -51,6 +51,14 @@ public class EntityTypeRegistry {
         v1215.put(EntityType.ARMOR_STAND, 5);
         v1215.put(EntityType.PLAYER, 148);
         REGISTRY.put(ProtocolVersion.V1_21_5, v1215);
+
+        var v1216 = new EnumMap<EntityType, Integer>(EntityType.class);
+        v1216.put(EntityType.ARMOR_STAND, 5);
+        v1216.put(EntityType.PLAYER, 149);
+        REGISTRY.put(ProtocolVersion.V1_21_6, v1216);
+
+        //for Protocol 771 nothing changed
+        REGISTRY.put(ProtocolVersion.V1_21_7, v1216);
     }
 
     /**

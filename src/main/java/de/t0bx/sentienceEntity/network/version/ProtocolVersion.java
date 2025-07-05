@@ -30,6 +30,7 @@
 
 package de.t0bx.sentienceEntity.network.version;
 
+import de.t0bx.sentienceEntity.SentienceEntity;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -38,7 +39,9 @@ import org.bukkit.Bukkit;
 @RequiredArgsConstructor
 public enum ProtocolVersion {
     V1_21_4("1.21.4", 	769),
-    V1_21_5("1.21.5", 770);
+    V1_21_5("1.21.5", 770),
+    V1_21_6("1.21.6", 771),
+    V1_21_7("1.21.7", 772);
 
     private final String versionString;
     private final int protocolId;
@@ -55,6 +58,8 @@ public enum ProtocolVersion {
         for (ProtocolVersion version : values()) {
             if (serverVersion.contains(version.versionString)) return version;
         }
+
+        Bukkit.getPluginManager().disablePlugin(SentienceEntity.getInstance());
         throw new IllegalStateException("SentienceEntity doesn't support Version: " + serverVersion);
     }
 }
