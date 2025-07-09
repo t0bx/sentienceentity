@@ -47,14 +47,14 @@ public class EntityTypeRegistry {
         v1214.put(EntityType.PLAYER, 147);
         REGISTRY.put(ProtocolVersion.V1_21_4, v1214);
 
-        var v1215 = new EnumMap<EntityType, Integer>(EntityType.class);
-        v1215.put(EntityType.ARMOR_STAND, 5);
-        v1215.put(EntityType.PLAYER, 148);
+        var v1215 = cloneWithChanges(v1214, Map.of(
+               EntityType.PLAYER, 148
+        ));
         REGISTRY.put(ProtocolVersion.V1_21_5, v1215);
 
-        var v1216 = new EnumMap<EntityType, Integer>(EntityType.class);
-        v1216.put(EntityType.ARMOR_STAND, 5);
-        v1216.put(EntityType.PLAYER, 149);
+        var v1216 = cloneWithChanges(v1215, Map.of(
+                EntityType.PLAYER, 149
+        ));
         REGISTRY.put(ProtocolVersion.V1_21_6, v1216);
 
         //for Protocol 771 nothing changed
@@ -78,5 +78,12 @@ public class EntityTypeRegistry {
             throw new IllegalArgumentException("No packet mapping for entity Type " + entityType + " in version " + version);
         }
         return map.get(entityType);
+    }
+
+    private static EnumMap<EntityType, Integer> cloneWithChanges(EnumMap<EntityType, Integer> base,
+                                                               Map<EntityType, Integer> changes) {
+        var clone = new EnumMap<>(base);
+        clone.putAll(changes);
+        return clone;
     }
 }
