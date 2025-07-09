@@ -1,5 +1,5 @@
 name: SentienceEntity
-version: '1.7'
+version: '1.8'
 main: de.t0bx.sentienceEntity.SentienceEntity
 api-version: '1.21'
 authors: [ t0bx ]
