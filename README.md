@@ -89,7 +89,7 @@ This Project uses Maven:
 <dependency>
     <groupId>de.t0bx</groupId>
     <artifactId>SentienceEntity</artifactId>
-    <version>1.7</version>
+    <version>1.8</version>
     <scope>provided</scope>
 </dependency>
 ```
