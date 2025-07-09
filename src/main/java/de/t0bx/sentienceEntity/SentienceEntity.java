@@ -31,6 +31,7 @@
 package de.t0bx.sentienceEntity;
 
 import de.t0bx.sentienceEntity.commands.SentienceEntityCommand;
+import de.t0bx.sentienceEntity.config.ConfigFileManager;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.listener.NpcSpawnListener;
 import de.t0bx.sentienceEntity.listener.PlayerMoveListener;
@@ -44,6 +45,8 @@ import de.t0bx.sentienceEntity.network.handler.PacketReceiveHandler;
 import de.t0bx.sentienceEntity.update.UpdateManager;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
 import lombok.Getter;
+import lombok.Setter;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Team;
@@ -73,6 +76,13 @@ public final class SentienceEntity extends JavaPlugin {
 
     private boolean PAPER;
 
+    private ConfigFileManager configFileManager;
+
+    @Setter
+    private boolean bStatsEnabled;
+
+    private Metrics metrics;
+
     @Override
     public void onLoad() {
         if (isPaperServer()) {
@@ -90,6 +100,15 @@ public final class SentienceEntity extends JavaPlugin {
     public void onEnable() {
         instance = this;
         this.getLogger().info("Starting SentienceEntity...");
+        this.configFileManager = new ConfigFileManager();
+
+        if (this.bStatsEnabled) {
+            this.getLogger().info("bStats is enabled for SentienceEntity.");
+            int bStatsPluginId = 26431;
+            this.metrics = new Metrics(this, bStatsPluginId);
+        } else {
+            this.getLogger().info("bStats is disabled for SentienceEntity.");
+        }
 
         this.updateManager = new UpdateManager(this);
         this.updateManager.checkForUpdate();
@@ -124,6 +143,12 @@ public final class SentienceEntity extends JavaPlugin {
         for (Team team : Bukkit.getScoreboardManager().getMainScoreboard().getTeams()) {
             if (team.getName().startsWith("hidden_")) {
                 team.unregister();
+            }
+        }
+
+        if (bStatsEnabled) {
+            if (this.metrics != null) {
+                this.metrics.shutdown();
             }
         }
     }
