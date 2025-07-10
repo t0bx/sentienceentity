@@ -1,51 +1,109 @@
 package de.t0bx.sentienceEntity.path;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
+import de.t0bx.sentienceEntity.network.wrapper.PacketWrapper;
 import de.t0bx.sentienceEntity.network.wrapper.packets.PacketSetHeadRotation;
 import de.t0bx.sentienceEntity.network.wrapper.packets.PacketTeleportEntity;
-import de.t0bx.sentienceEntity.network.wrapper.packets.PacketUpdateEntityRotation;
 import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import de.t0bx.sentienceEntity.path.data.Node;
 import de.t0bx.sentienceEntity.path.data.SentiencePath;
 import de.t0bx.sentienceEntity.path.data.SentiencePointPath;
-import lombok.Getter;
-import org.bukkit.Bukkit;
+import de.t0bx.sentienceEntity.path.serializer.PathSerializer;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
-@Getter
-public class SentiencePathExecutor {
-
-    private final int entityId;
-    private final SentiencePath path;
-
-    public SentiencePathExecutor(int entityId, SentiencePath path) {
-        this.entityId = entityId;
-        this.path = path;
-    }
+/**
+ * Represents an executor responsible for handling the movement and path traversal
+ * of an entity within a virtual world environment. The executor is designed to
+ * manage the navigation process, including pathfinding, interpolation, movement updates,
+ * and synchronization with client-side visual representations.
+ *
+ * The {@code SentiencePathExecutor} operates using a defined path ({@code SentiencePath})
+ * associated with a specific entity, identified by the entity's unique ID. It provides
+ * functionalities to prepare, execute, and manage paths that an entity traverses, ensuring
+ * smooth and natural movement across the environment.
+ */
+public record SentiencePathExecutor(int entityId, SentiencePath path) {
 
     public void preparePath() {
-        startPath(ensurePathLoaded(path));
+        CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        List<Location> locationsPath = PathSerializer.loadPath(path.getName());
+                        if (locationsPath == null) {
+                            locationsPath = ensurePathLoaded(path);
+                            PathSerializer.savePath(path.getName(), locationsPath);
+                        }
+                        return locationsPath;
+                    } catch (IOException e) {
+                        SentienceEntity.getInstance().getLogger().log(Level.WARNING, "Error loading/saving path " + path.getName(), e);
+                        return null;
+                    }
+                })
+                .thenAccept(locationsPath -> {
+                    if (locationsPath != null) {
+                        startPath(locationsPath);
+                    } else {
+                        SentienceEntity.getInstance().getLogger().warning("Loaded path was null for " + path.getName());
+                    }
+                })
+                .exceptionally(ex -> {
+                    SentienceEntity.getInstance().getLogger().log(Level.SEVERE, "Failed to load path asynchronously: " + path.getName(), ex);
+                    return null;
+                });
     }
 
-    public void startPath(List<Location> paths) {
-        System.out.println("Starting...");
+    /**
+     * Starts the execution of a movement path for an NPC by iterating through a given sequence of locations.
+     * The NPC moves from one location to the next, with each step involving orientation adjustments (yaw and pitch)
+     * to simulate natural movement. This process is managed by a repeating task.
+     *
+     * @param paths a list of {@code Location} objects representing the waypoints the NPC should traverse
+     */
+    private void startPath(List<Location> paths) {
         String npcName = SentienceEntity.getInstance().getNpcshandler().getNpcNameFromId(entityId);
         SentienceNPC npc = SentienceEntity.getInstance().getNpcshandler().getNPC(npcName);
 
         new BukkitRunnable() {
             int index = 0;
+            boolean jumping = false;
+            final List<Location> jumpSteps = new ArrayList<>();
+            int jumpStepIndex = 0;
 
             @Override
             public void run() {
+                if (jumping) {
+                    if (jumpStepIndex >= jumpSteps.size()) {
+                        jumping = false;
+                        jumpStepIndex = 0;
+                        index++;
+                    } else {
+                        Location jumpLoc = jumpSteps.get(jumpStepIndex++);
+                        for (var players : npc.getChannels()) {
+                            players.sendMultiplePackets(
+                                    sendMovementPacket(npc, jumpLoc, jumpLoc.getYaw(), jumpLoc.getPitch()),
+                                    sendHeadRotationPacket(npc, jumpLoc.getYaw())
+                            );
+                        }
+                        return;
+                    }
+                }
+
                 if (index >= paths.size() - 1) {
                     cancel();
-                    sendMovementPacket(npc, npc.getLocation(), npc.getLocation().getYaw(), npc.getLocation().getPitch());
+                    for (var players : npc.getChannels()) {
+                        players.sendMultiplePackets(
+                                sendMovementPacket(npc, npc.getLocation(), npc.getLocation().getYaw(), npc.getLocation().getPitch()),
+                                sendHeadRotationPacket(npc, npc.getLocation().getYaw())
+                        );
+                    }
                     return;
                 }
 
@@ -55,31 +113,147 @@ public class SentiencePathExecutor {
                 float yaw = calculateYaw(current, next);
                 float pitch = calculatePitch(current, next);
 
-                sendMovementPacket(npc, next, yaw, pitch);
-                sendHeadRotationPacket(npc, yaw);
+                if (next.getY() > current.getY()) {
+                    Location jumpLoc = next.clone();
+                    jumpLoc.setY(jumpLoc.getY() + 0.5);
+                    jumpLoc.setYaw(yaw);
+                    jumpLoc.setPitch(pitch);
+
+                    for (var players : npc.getChannels()) {
+                        players.sendMultiplePackets(
+                                sendMovementPacket(npc, jumpLoc, yaw, pitch),
+                                sendHeadRotationPacket(npc, yaw)
+                        );
+                    }
+
+                    index++;
+                    return;
+                }
+
+                for (var players : npc.getChannels()) {
+                    players.sendMultiplePackets(
+                            sendMovementPacket(npc, next, yaw, pitch),
+                            sendHeadRotationPacket(npc, yaw)
+                    );
+                }
                 index++;
             }
         }.runTaskTimer(SentienceEntity.getInstance(), 0L, 2L);
     }
 
-    public void sendMovementPacket(SentienceNPC npc, Location location, float yaw, float pitch) {
+    /**
+     * Sends a movement packet to update the position and orientation of the specified NPC
+     * to the given location and directions (yaw and pitch). This ensures the NPC's movement
+     * and rotation are synchronized with the client.
+     *
+     * @param npc      the {@code SentienceNPC} whose movement is being updated
+     * @param location the {@code Location} representing the new position of the NPC
+     * @param yaw      the yaw angle (horizontal rotation) of the NPC
+     * @param pitch    the pitch angle (vertical rotation) of the NPC
+     */
+    private PacketWrapper sendMovementPacket(SentienceNPC npc, Location location, float yaw, float pitch) {
         location.setYaw(yaw);
         location.setPitch(pitch);
-        var movePacket = new PacketTeleportEntity(npc.getEntityId(), location, 0, 0, 0, true);
-
-        for (var players : npc.getChannels()) {
-            players.sendPacket(movePacket);
-        }
+        return new PacketTeleportEntity(npc.getEntityId(), location, 0, 0, 0, true);
     }
 
-    public void sendHeadRotationPacket(SentienceNPC npc, float yaw) {
-        var headRotationPacket = new PacketSetHeadRotation(npc.getEntityId(), yaw);
-
-        for (var players : npc.getChannels()) {
-            players.sendPacket(headRotationPacket);
-        }
+    /**
+     * Sends a packet to update the head rotation of the specified NPC to a given yaw angle.
+     * This method creates a head rotation packet and broadcasts it to all players
+     * currently connected to the NPC's channels.
+     *
+     * @param npc the {@code SentienceNPC} whose head rotation is being updated
+     * @param yaw the yaw angle (horizontal rotation) to set for the NPC's head
+     */
+    private PacketWrapper sendHeadRotationPacket(SentienceNPC npc, float yaw) {
+        return new PacketSetHeadRotation(npc.getEntityId(), yaw);
     }
 
+    /**
+     * Generates a series of jumping steps as intermediate locations from a starting point to
+     * a target point, simulating a parabolic arc. The steps are computed based on the provided
+     * yaw and pitch angles to reflect orientation during the jump.
+     *
+     * @param from the starting {@code Location} of the jump
+     * @param to the target {@code Location} of the jump
+     * @param yaw the horizontal rotation angle during the jump
+     * @param pitch the vertical rotation angle during the jump
+     * @return a list of {@code Location} objects representing the steps of the jump,
+     *         including the intermediate points along the trajectory and the target location
+     */
+    private List<Location> generateJumpSteps(Location from, Location to, float yaw, float pitch) {
+        List<Location> steps = new ArrayList<>();
+
+        double totalHeight = to.getY() - from.getY();
+        double jumpHeight = Math.max(totalHeight, 0.8);
+        int stepsCount = 10;
+
+        for (int i = 0; i < stepsCount; i++) {
+            double progress = (double) i / (stepsCount - 1);
+            double yOffset = 4 * jumpHeight * progress * (1 - progress);
+            double newY = from.getY() + yOffset;
+
+            double newX = from.getX() + (to.getX() - from.getX()) * progress;
+            double newZ = from.getZ() + (to.getZ() - from.getZ()) * progress;
+
+            Location stepLoc = new Location(
+                    from.getWorld(),
+                    newX,
+                    newY,
+                    newZ,
+                    yaw,
+                    pitch
+            );
+            steps.add(stepLoc);
+        }
+        return steps;
+    }
+
+    /**
+     * Calculates the yaw angle between two locations in a 2D plane.
+     * The yaw is the angle of rotation around the Y-axis and represents
+     * the horizontal direction of movement from the starting location
+     * to the target location.
+     *
+     * @param from the starting location
+     * @param to   the target location
+     * @return the yaw angle in degrees, measured clockwise from the positive Z-axis,
+     * in the range of [0, 360).
+     */
+    private float calculateYaw(Location from, Location to) {
+        double dx = to.getX() - from.getX();
+        double dz = to.getZ() - from.getZ();
+
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        return yaw < 0 ? yaw + 360 : yaw;
+    }
+
+    /**
+     * Calculates the pitch angle between two locations in 3D space.
+     * The pitch is the angle of rotation around the X-axis and represents
+     * the upward or downward direction of the movement between the two locations.
+     *
+     * @param from the starting location
+     * @param to   the target location
+     * @return the pitch angle in degrees, negative for downward direction and positive for upward direction
+     */
+    private float calculatePitch(Location from, Location to) {
+        double dx = to.getX() - from.getX();
+        double dy = to.getY() - from.getY();
+        double dz = to.getZ() - from.getZ();
+
+        double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+        return (float) -Math.toDegrees(Math.atan2(dy, horizontalDistance));
+    }
+
+    /**
+     * Ensures that all segments of the given {@code SentiencePath} are loaded and fully interpolated.
+     * This method reconstructs the path by interpolating points between adjacent locations in the path,
+     * ensuring a smooth traversal for the entity.
+     *
+     * @param path the {@code SentiencePath} object containing the sequence of points to be processed
+     * @return a list of {@code Location} objects representing the fully loaded and interpolated path
+     */
     public List<Location> ensurePathLoaded(SentiencePath path) {
         Map<Integer, SentiencePointPath> paths = path.getPaths();
 
@@ -125,40 +299,16 @@ public class SentiencePathExecutor {
         return allPoints;
     }
 
-    private List<Location> interpolateLinearPath(SentiencePointPath from, SentiencePointPath to, double step) {
-        Location start = from.getLocation();
-        Location end = to.getLocation();
-
-        double dx = end.getX() - start.getX();
-        double dy = end.getY() - start.getY();
-        double dz = end.getZ() - start.getZ();
-
-        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-        if (distance == 0) {
-            return Collections.singletonList(start);
-        }
-
-        int steps = (int) Math.floor(distance / step);
-
-        List<Location> result = new ArrayList<>();
-
-        for (int i = 0; i <= steps; i++) {
-            double t = (i * step) / distance;
-            double x = start.getX() + dx * t;
-            double y = start.getY() + dy * t;
-            double z = start.getZ() + dz * t;
-
-            result.add(new Location(start.getWorld(), x, y, z));
-        }
-
-        if (!result.isEmpty() && !result.getLast().equals(end)) {
-            result.add(end);
-        }
-
-        return result;
-    }
-
+    /**
+     * Interpolates a linear path between two locations by adding intermediate points at equal distances.
+     * This method calculates points along the straight line between the given start and end locations
+     * separated by the specified step distance.
+     *
+     * @param start the starting location of the path
+     * @param end   the ending location of the path
+     * @param step  the distance between adjacent points in the generated path
+     * @return a list of locations representing the interpolated linear path, including the start and end points
+     */
     private List<Location> interpolateLinearPath(Location start, Location end, double step) {
         double dx = end.getX() - start.getX();
         double dy = end.getY() - start.getY();
@@ -190,23 +340,17 @@ public class SentiencePathExecutor {
         return result;
     }
 
-    public float calculateYaw(Location from, Location to) {
-        double dx = to.getX() - from.getX();
-        double dz = to.getZ() - from.getZ();
-
-        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-        return yaw < 0 ? yaw + 360 : yaw;
-    }
-
-    public float calculatePitch(Location from, Location to) {
-        double dx = to.getX() - from.getX();
-        double dy = to.getY() - from.getY();
-        double dz = to.getZ() - from.getZ();
-
-        double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
-        return (float) -Math.toDegrees(Math.atan2(dy, horizontalDistance));
-    }
-
+    /**
+     * Finds a simple path between a start and goal location within a specified world.
+     * This method uses a breadth-first search to explore neighboring nodes
+     * and determine a traversable path from the start to the goal.
+     *
+     * @param start the starting location of the path
+     * @param goal  the goal location of the path
+     * @param world the world in which the pathfinding is being conducted
+     * @return a list of locations representing the path from start to goal,
+     * or an empty list if no path is found
+     */
     public List<Location> findSimplePath(Location start, Location goal, World world) {
         Queue<Node> queue = new LinkedList<>();
         Set<Node> visited = new HashSet<>();
@@ -236,6 +380,14 @@ public class SentiencePathExecutor {
         return Collections.emptyList();
     }
 
+    /**
+     * Reconstructs the path from an end node by tracing its parent nodes
+     * back to the start and converting each node to a location within the given world.
+     *
+     * @param end   the end node of the path to be reconstructed
+     * @param world the world in which the path is located
+     * @return a list of locations representing the reconstructed path from start to end
+     */
     private List<Location> reconstructPath(Node end, World world) {
         List<Location> path = new ArrayList<>();
         Node current = end;
@@ -247,6 +399,15 @@ public class SentiencePathExecutor {
         return path;
     }
 
+    /**
+     * Generates a list of neighboring nodes that are traversable from the current node
+     * in the given world. This method considers all possible directions, including diagonals,
+     * and ensures that the entity's movement follows traversal rules determined by the position constraints.
+     *
+     * @param current the current node from which neighbors are to be generated
+     * @param world   the world in which the traversal is occurring
+     * @return a list of neighboring nodes that can be traversed to from the current node
+     */
     private List<Node> generateNeighbors(Node current, World world) {
         List<Node> neighbors = new ArrayList<>();
 
@@ -254,12 +415,23 @@ public class SentiencePathExecutor {
                 {1, 0},
                 {-1, 0},
                 {0, 1},
-                {0, -1}
+                {0, -1},
+                {1, 1},
+                {1, -1},
+                {-1, 1},
+                {-1, -1}
         };
 
         for (int[] dir : directions) {
             int dx = dir[0];
             int dz = dir[1];
+
+            if (Math.abs(dx) == 1 && Math.abs(dz) == 1) {
+                if (!canStandAt(world, current.x + dx, current.y, current.z) ||
+                        !canStandAt(world, current.x, current.y, current.z + dz)) {
+                    continue;
+                }
+            }
 
             if (canStandAt(world, current.x + dx, current.y, current.z + dz)) {
                 neighbors.add(new Node(current.x + dx, current.y, current.z + dz));
@@ -273,6 +445,17 @@ public class SentiencePathExecutor {
         return neighbors;
     }
 
+    /**
+     * Determines if an entity can stand at a specified location in the given world.
+     * It checks whether the block at the specified position for the entity's feet and head are passable,
+     * and whether the block below the feet is a solid block.
+     *
+     * @param world the world in which the block positions are checked
+     * @param x     the x-coordinate of the position to check
+     * @param y     the y-coordinate of the position to check
+     * @param z     the z-coordinate of the position to check
+     * @return true if the entity can stand at the specified location; false otherwise
+     */
     private boolean canStandAt(World world, int x, int y, int z) {
         Block feet = world.getBlockAt(x, y, z);
         Block head = world.getBlockAt(x, y + 1, z);

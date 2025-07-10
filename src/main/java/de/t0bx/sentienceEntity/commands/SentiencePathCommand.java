@@ -2,6 +2,7 @@ package de.t0bx.sentienceEntity.commands;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.path.SentiencePathHandler;
+import de.t0bx.sentienceEntity.path.serializer.PathSerializer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -13,7 +14,9 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
 
 public class SentiencePathCommand implements CommandExecutor, TabCompleter {
 
@@ -153,6 +156,14 @@ public class SentiencePathCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        try {
+            if (PathSerializer.loadPath(pathName) != null) {
+                PathSerializer.removePath(pathName);
+            }
+        } catch (IOException exception) {
+            SentienceEntity.getInstance().getLogger().log(Level.WARNING, "Failed to remove path '" + pathName + "'!", exception);
+        }
+
         this.sentiencePathHandler.removePath(pathName);
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Successfully removed path '" + pathName + "'"));
     }
@@ -161,6 +172,14 @@ public class SentiencePathCommand implements CommandExecutor, TabCompleter {
         if (!this.sentiencePathHandler.doesPathNameExist(pathName)) {
             sendMessage(player, this.miniMessage.deserialize(this.prefix + "The path '" + pathName + "' does not exist!"));
             return;
+        }
+
+        try {
+            if (PathSerializer.loadPath(pathName) != null) {
+                PathSerializer.removePath(pathName);
+            }
+        } catch (IOException exception) {
+            SentienceEntity.getInstance().getLogger().log(Level.WARNING, "Failed to remove path '" + pathName + "'!", exception);
         }
 
         this.sentiencePathHandler.addPoint(pathName, player.getLocation(), isTeleport);
@@ -176,6 +195,14 @@ public class SentiencePathCommand implements CommandExecutor, TabCompleter {
         if (!this.sentiencePathHandler.hasPathIndex(pathName, index)) {
             sendMessage(player, this.miniMessage.deserialize(this.prefix + "The path '" + pathName + "' does not have a point at index '" + index + "'!"));
             return;
+        }
+
+        try {
+            if (PathSerializer.loadPath(pathName) != null) {
+                PathSerializer.removePath(pathName);
+            }
+        } catch (IOException exception) {
+            SentienceEntity.getInstance().getLogger().log(Level.WARNING, "Failed to remove path '" + pathName + "'!", exception);
         }
 
         this.sentiencePathHandler.removePoint(pathName, index);

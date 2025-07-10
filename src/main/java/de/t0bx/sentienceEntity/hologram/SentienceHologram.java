@@ -32,9 +32,9 @@ package de.t0bx.sentienceEntity.hologram;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.network.PacketPlayer;
-import de.t0bx.sentienceEntity.network.utils.EntityType;
 import de.t0bx.sentienceEntity.network.metadata.MetadataEntry;
 import de.t0bx.sentienceEntity.network.metadata.MetadataType;
+import de.t0bx.sentienceEntity.network.utils.EntityType;
 import de.t0bx.sentienceEntity.network.wrapper.packets.*;
 import de.t0bx.sentienceEntity.utils.ReflectionUtils;
 import lombok.Getter;

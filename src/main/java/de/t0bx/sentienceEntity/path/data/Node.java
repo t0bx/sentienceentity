@@ -7,18 +7,12 @@ import java.util.Objects;
 @Data
 public class Node {
     public int x, y, z;
-    public double gCost;
-    public double hCost;
     public Node parent;
 
     public Node(int x, int y, int z) {
         this.x = x;
         this.y = y;
         this.z = z;
-    }
-
-    public double getFCost() {
-        return gCost + hCost;
     }
 
     @Override
