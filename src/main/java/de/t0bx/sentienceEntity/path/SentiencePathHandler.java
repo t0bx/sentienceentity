@@ -11,7 +11,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings({"ResultOfMethodCallIgnored", "CallToPrintStackTrace"})
@@ -27,6 +30,16 @@ public class SentiencePathHandler {
         this.loadPathsFromFile();
     }
 
+    /**
+     * Applies a pre-defined sentience path to the specified entity.
+     *
+     * This method retrieves a `SentiencePath` object associated with the given
+     * path name from the cache. If the path exists, it initializes a
+     * `SentiencePathExecutor` for the specified entity and calls its preparation logic.
+     *
+     * @param entityId The unique identifier of the entity to which the path will be applied.
+     * @param pathName The name of the sentience path to be applied.
+     */
     public void applyPath(int entityId, String pathName) {
         SentiencePath path = this.cachedPaths.getOrDefault(pathName, null);
         if (path == null) return;
@@ -35,6 +48,17 @@ public class SentiencePathHandler {
         executor.preparePath();
     }
 
+    /**
+     * Creates a new sentience path with the specified name and caches it.
+     *
+     * This method checks if a path with the given name already exists in the cache.
+     * If the path already exists, it throws an IllegalArgumentException. Otherwise,
+     * it creates a new {@code SentiencePath} and adds it to the cache.
+     *
+     * @param pathName The name of the new sentience path to be created.
+     *                 Must be unique and not already present in the cache.
+     * @throws IllegalArgumentException If a path with the specified name already exists.
+     */
     public void createPath(String pathName) {
         if (this.cachedPaths.containsKey(pathName))
             throw new IllegalArgumentException("Path with name " + pathName + " already exists!");
@@ -43,6 +67,17 @@ public class SentiencePathHandler {
         this.cachedPaths.put(pathName, path);
     }
 
+    /**
+     * Removes a sentience path identified by the specified name from the cache.
+     *
+     * This method checks if a path with the given name exists in the cache. If the path
+     * does not exist, it throws an {@code IllegalArgumentException}. If the path exists,
+     * it is removed from the cache.
+     *
+     * @param pathName The name of the sentience path to be removed.
+     *                 Must correspond to an existing path in the cache.
+     * @throws IllegalArgumentException If a path with the specified name does not exist.
+     */
     public void removePath(String pathName) {
         if (!this.cachedPaths.containsKey(pathName))
             throw new IllegalArgumentException("Path with name " + pathName + " does not exist!");
@@ -50,10 +85,30 @@ public class SentiencePathHandler {
         this.cachedPaths.remove(pathName);
     }
 
+    /**
+     * Checks whether a sentience path with the specified name exists in the cache.
+     *
+     * This method verifies if the provided path name is present in the cached paths map.
+     *
+     * @param pathName The name of the sentience path to check for existence.
+     *                 Must not be null or empty.
+     * @return {@code true} if the path with the specified name exists in the cache,
+     *         {@code false} otherwise.
+     */
     public boolean doesPathNameExist(String pathName) {
         return this.cachedPaths.containsKey(pathName);
     }
 
+    /**
+     * Checks if a specific index exists in the path identified by the provided path name.
+     *
+     * This method retrieves the {@code SentiencePath} associated with the given name
+     * from the cache and verifies if its path map contains the specified index.
+     *
+     * @param pathName The name of the sentience path to be checked. Must not be null.
+     * @param index The index to check for existence in the path.
+     * @return {@code true} if the specified index exists in the path, {@code false} otherwise.
+     */
     public boolean hasPathIndex(String pathName, int index) {
         SentiencePath path = this.cachedPaths.getOrDefault(pathName, null);
         if (path == null) return false;
@@ -61,6 +116,23 @@ public class SentiencePathHandler {
         return path.getPaths().containsKey(index);
     }
 
+    /**
+     * Adds a new point to an existing sentience path identified by the provided name.
+     *
+     * This method retrieves the `SentiencePath` associated with the specified path name
+     * from the cache. If the path does not exist, it throws an `IllegalArgumentException`.
+     * A new `SentiencePointPath` is created and initialized with the specified location and
+     * teleport flag, then added to the list of points in the retrieved path. The new point
+     * is also saved to the respective file for persistence.
+     *
+     * @param pathName The name of the sentience path to which the point will be added.
+     *                 Must correspond to an existing path in the cache.
+     * @param location An instance of `Location` that represents the coordinates of the new point.
+     *                 Must not be null.
+     * @param isTeleport A boolean indicating whether the point represents a teleport location.
+     *                   If true, it marks this point as a teleport point.
+     * @throws IllegalArgumentException If no path with the specified name exists in the cache.
+     */
     public void addPoint(String pathName, Location location, boolean isTeleport) {
         SentiencePath path = this.cachedPaths.getOrDefault(pathName, null);
         if (path == null) throw new IllegalArgumentException("Path with name " + pathName + " does not exist!");
@@ -73,6 +145,18 @@ public class SentiencePathHandler {
         savePointToFile(pathName, pointPath);
     }
 
+    /**
+     * Removes a point at the specified index from the sentience path identified by the given path name.
+     *
+     * This method updates the internal representation of the path by removing the point
+     * at the specified index, reindexing the remaining points, and clearing the original map.
+     * It also ensures the removal is persisted to the external storage.
+     *
+     * @param pathName The name of the sentience path from which the point will be removed.
+     *                 Must correspond to an existing path in the cache.
+     * @param index The index of the point to be removed. Must be within the bounds of the path's points.
+     * @throws IllegalArgumentException If the path with the specified name does not exist, or if the index is out of bounds.
+     */
     public void removePoint(String pathName, int index) {
         SentiencePath path = this.cachedPaths.getOrDefault(pathName, null);
         if (path == null) throw new IllegalArgumentException("Path with name " + pathName + " does not exist!");
@@ -96,15 +180,50 @@ public class SentiencePathHandler {
         removePointFromFile(pathName, index);
     }
 
+    /**
+     * Retrieves the specified {@code SentiencePath} from the cached paths.
+     *
+     * This method looks up the cache for a sentience path name and returns the associated
+     * {@code SentiencePath} object if found. If the specified path name does not exist
+     * in the cache, it returns {@code null}.
+     *
+     * @param pathName The name of the sentience path to retrieve. Must not be null.
+     * @return The {@code SentiencePath} associated with the given path name, or {@code null}
+     *         if no such path exists in the cache.
+     */
     @SuppressWarnings("unused")
     public SentiencePath getPath(String pathName) {
         return this.cachedPaths.getOrDefault(pathName, null);
     }
 
+    /**
+     * Retrieves the points associated with a specified sentience path.
+     *
+     * This method fetches the {@code Map<Integer, SentiencePointPath>} that represents the
+     * points in the sentience path identified by the given path name. If the specified
+     * path name is not found in the cache, it returns {@code null}.
+     *
+     * @param pathName The name of the sentience path whose points are to be retrieved.
+     *                 Must correspond to an existing path in the cache. Must not be null.
+     * @return A map where the keys are point indices and the values are {@code SentiencePointPath} objects
+     *         representing the points in the path. Returns {@code null} if the path does not exist in the cache.
+     */
     public Map<Integer, SentiencePointPath> getPoints(String pathName) {
         return this.cachedPaths.getOrDefault(pathName, null).getPaths();
     }
 
+    /**
+     * Retrieves an unmodifiable view of all cached sentience paths.
+     *
+     * This method provides access to the internal map of sentience paths,
+     * where the keys are path names and the values are the corresponding
+     * {@code SentiencePath} objects. The returned map is immutable, ensuring
+     * that its contents cannot be altered externally.
+     *
+     * @return A map containing all cached sentience paths. The keys represent
+     *         the names of the paths, and the values are the associated {@code SentiencePath}
+     *         objects. The returned map is unmodifiable.
+     */
     public Map<String, SentiencePath> getPaths() {
         return Collections.unmodifiableMap(this.cachedPaths);
     }
