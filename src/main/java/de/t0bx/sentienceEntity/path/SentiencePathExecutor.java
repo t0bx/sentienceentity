@@ -12,6 +12,7 @@ import de.t0bx.sentienceEntity.path.serializer.PathSerializer;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.IOException;
@@ -42,8 +43,8 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
                             PathSerializer.savePath(path.getName(), locationsPath);
                         }
                         return locationsPath;
-                    } catch (IOException e) {
-                        SentienceEntity.getInstance().getLogger().log(Level.WARNING, "Error loading/saving path " + path.getName(), e);
+                    } catch (IOException exception) {
+                        SentienceEntity.getInstance().getLogger().log(Level.WARNING, "Error loading/saving path " + path.getName(), exception);
                         return null;
                     }
                 })
@@ -73,29 +74,9 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
 
         new BukkitRunnable() {
             int index = 0;
-            boolean jumping = false;
-            final List<Location> jumpSteps = new ArrayList<>();
-            int jumpStepIndex = 0;
 
             @Override
             public void run() {
-                if (jumping) {
-                    if (jumpStepIndex >= jumpSteps.size()) {
-                        jumping = false;
-                        jumpStepIndex = 0;
-                        index++;
-                    } else {
-                        Location jumpLoc = jumpSteps.get(jumpStepIndex++);
-                        for (var players : npc.getChannels()) {
-                            players.sendMultiplePackets(
-                                    sendMovementPacket(npc, jumpLoc, jumpLoc.getYaw(), jumpLoc.getPitch()),
-                                    sendHeadRotationPacket(npc, jumpLoc.getYaw())
-                            );
-                        }
-                        return;
-                    }
-                }
-
                 if (index >= paths.size() - 1) {
                     cancel();
                     for (var players : npc.getChannels()) {
@@ -115,7 +96,7 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
 
                 if (next.getY() > current.getY()) {
                     Location jumpLoc = next.clone();
-                    jumpLoc.setY(jumpLoc.getY() + 0.5);
+                    jumpLoc.setY(jumpLoc.getY() + 0.2);
                     jumpLoc.setYaw(yaw);
                     jumpLoc.setPitch(pitch);
 
@@ -170,46 +151,6 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
     }
 
     /**
-     * Generates a series of jumping steps as intermediate locations from a starting point to
-     * a target point, simulating a parabolic arc. The steps are computed based on the provided
-     * yaw and pitch angles to reflect orientation during the jump.
-     *
-     * @param from the starting {@code Location} of the jump
-     * @param to the target {@code Location} of the jump
-     * @param yaw the horizontal rotation angle during the jump
-     * @param pitch the vertical rotation angle during the jump
-     * @return a list of {@code Location} objects representing the steps of the jump,
-     *         including the intermediate points along the trajectory and the target location
-     */
-    private List<Location> generateJumpSteps(Location from, Location to, float yaw, float pitch) {
-        List<Location> steps = new ArrayList<>();
-
-        double totalHeight = to.getY() - from.getY();
-        double jumpHeight = Math.max(totalHeight, 0.8);
-        int stepsCount = 10;
-
-        for (int i = 0; i < stepsCount; i++) {
-            double progress = (double) i / (stepsCount - 1);
-            double yOffset = 4 * jumpHeight * progress * (1 - progress);
-            double newY = from.getY() + yOffset;
-
-            double newX = from.getX() + (to.getX() - from.getX()) * progress;
-            double newZ = from.getZ() + (to.getZ() - from.getZ()) * progress;
-
-            Location stepLoc = new Location(
-                    from.getWorld(),
-                    newX,
-                    newY,
-                    newZ,
-                    yaw,
-                    pitch
-            );
-            steps.add(stepLoc);
-        }
-        return steps;
-    }
-
-    /**
      * Calculates the yaw angle between two locations in a 2D plane.
      * The yaw is the angle of rotation around the Y-axis and represents
      * the horizontal direction of movement from the starting location
@@ -243,7 +184,9 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
         double dz = to.getZ() - from.getZ();
 
         double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
-        return (float) -Math.toDegrees(Math.atan2(dy, horizontalDistance));
+        double pitch = -Math.toDegrees(Math.atan2(dy, horizontalDistance));
+
+        return (float) (pitch * 0.5);
     }
 
     /**
@@ -283,14 +226,14 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
                 List<Location> steps = interpolateLinearPath(from, to, 0.5);
 
                 if (!interpolatedSegment.isEmpty()) {
-                    steps.removeFirst();
+                    steps.remove(0);
                 }
 
                 interpolatedSegment.addAll(steps);
             }
 
             if (!allPoints.isEmpty()) {
-                interpolatedSegment.removeFirst();
+                interpolatedSegment.remove(0);
             }
 
             allPoints.addAll(interpolatedSegment);

@@ -42,23 +42,39 @@ public class EntityTypeRegistry {
     private static final Map<ProtocolVersion, EnumMap<EntityType, Integer>> REGISTRY = new HashMap<>();
 
     static {
-        var v1214 = new EnumMap<EntityType, Integer>(EntityType.class);
-        v1214.put(EntityType.ARMOR_STAND, 5);
-        v1214.put(EntityType.PLAYER, 147);
-        REGISTRY.put(ProtocolVersion.V1_21_4, v1214);
+        var v1_21 = new EnumMap<EntityType, Integer>(EntityType.class);
+        v1_21.put(EntityType.ARMOR_STAND, 3);
+        v1_21.put(EntityType.PLAYER, 128);
+        REGISTRY.put(ProtocolVersion.V1_21, v1_21);
 
-        var v1215 = cloneWithChanges(v1214, Map.of(
-               EntityType.PLAYER, 148
+        //No changes from v1_21 -> v1_21_1
+        REGISTRY.put(ProtocolVersion.V1_21_1, v1_21);
+
+        var v1_21_2 = cloneWithChanges(v1_21, Map.of(
+                EntityType.ARMOR_STAND, 5,
+                EntityType.PLAYER, 148
         ));
-        REGISTRY.put(ProtocolVersion.V1_21_5, v1215);
+        REGISTRY.put(ProtocolVersion.V1_21_2, v1_21_2);
 
-        var v1216 = cloneWithChanges(v1215, Map.of(
+        //No changes from v1_21_2 -> v1_21_3
+        REGISTRY.put(ProtocolVersion.V1_21_3, v1_21_2);
+
+
+        var v1_21_4 = cloneWithChanges(v1_21_2, Map.of(
+                EntityType.PLAYER, 147
+        ));
+        REGISTRY.put(ProtocolVersion.V1_21_4, v1_21_4);
+
+        //EntityType.Player is again 148 like in v1_21_2
+        REGISTRY.put(ProtocolVersion.V1_21_5, v1_21_2);
+
+        var v1_21_6 = cloneWithChanges(v1_21_4, Map.of(
                 EntityType.PLAYER, 149
         ));
-        REGISTRY.put(ProtocolVersion.V1_21_6, v1216);
+        REGISTRY.put(ProtocolVersion.V1_21_6, v1_21_6);
 
         //for Protocol 771 nothing changed
-        REGISTRY.put(ProtocolVersion.V1_21_7, v1216);
+        REGISTRY.put(ProtocolVersion.V1_21_7, v1_21_6);
     }
 
     /**

@@ -32,6 +32,8 @@ package de.t0bx.sentienceEntity.network.wrapper.packets;
 
 import de.t0bx.sentienceEntity.network.utils.PacketId;
 import de.t0bx.sentienceEntity.network.utils.PacketUtils;
+import de.t0bx.sentienceEntity.network.version.ProtocolVersion;
+import de.t0bx.sentienceEntity.network.version.VersionRegistry;
 import de.t0bx.sentienceEntity.network.version.registries.PacketIdRegistry;
 import de.t0bx.sentienceEntity.network.wrapper.PacketWrapper;
 import io.netty.buffer.ByteBuf;
@@ -85,9 +87,18 @@ public class PacketTeleportEntity implements PacketWrapper {
         PacketUtils.writeVarInt(buf, packetId);
 
         PacketUtils.writeVarInt(buf, entityId);
+
         PacketUtils.writeDouble(buf, location.getX());
         PacketUtils.writeDouble(buf, location.getY());
         PacketUtils.writeDouble(buf, location.getZ());
+
+        if (VersionRegistry.isProtocolBetween(ProtocolVersion.V1_21.getProtocolId(), ProtocolVersion.V1_21_1.getProtocolId())) {
+            PacketUtils.writeAngle(buf, location.getYaw());
+            PacketUtils.writeAngle(buf, location.getPitch());
+
+            PacketUtils.writeBoolean(buf, onGround);
+            return buf;
+        }
 
         PacketUtils.writeDouble(buf, velocityX);
         PacketUtils.writeDouble(buf, velocityY);
