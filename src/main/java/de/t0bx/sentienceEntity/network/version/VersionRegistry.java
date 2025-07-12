@@ -41,4 +41,17 @@ public class VersionRegistry {
     public static ProtocolVersion getVersion() {
         return VERSION;
     }
+
+    /**
+     * Checks if the current protocol version's ID is between the specified minimum and
+     * maximum protocol IDs, inclusive.
+     *
+     * @param min the minimum protocol ID to check against
+     * @param max the maximum protocol ID to check against
+     * @return {@code true} if the current protocol ID is within the specified range,
+     * {@code false} otherwise
+     */
+    public static boolean isProtocolBetween(int min, int max) {
+        return VERSION.getProtocolId() >= min && VERSION.getProtocolId() <= max;
+    }
 }

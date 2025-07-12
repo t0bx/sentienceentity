@@ -76,7 +76,7 @@ public class PacketSetPlayerTeam implements PacketWrapper {
             PacketUtils.writeComponent(buf, MiniMessage.miniMessage().deserialize("<green>Displayname"));
             buf.writeByte(friendlyFireFlags);
 
-            if (VersionRegistry.getVersion().getProtocolId() == ProtocolVersion.V1_21_4.getProtocolId()) {
+            if (VersionRegistry.isProtocolBetween(ProtocolVersion.V1_21.getProtocolId(), ProtocolVersion.V1_21_4.getProtocolId())) {
                 PacketUtils.writeString(buf, nameTagVisibility);
                 PacketUtils.writeString(buf, collisionRule);
             } else {

@@ -74,7 +74,7 @@ public class NbtListTag implements NbtTag {
      */
     @Override
     public void write(DataOutput output) throws IOException {
-        byte typeId = tags.isEmpty() ? 0 : tags.getFirst().getTagId();
+        byte typeId = tags.isEmpty() ? 0 : tags.get(0).getTagId();
         output.writeByte(typeId);
         output.writeInt(tags.size());
 
