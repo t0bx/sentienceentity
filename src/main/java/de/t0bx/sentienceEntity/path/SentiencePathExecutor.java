@@ -12,7 +12,6 @@ import de.t0bx.sentienceEntity.path.serializer.PathSerializer;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.IOException;
@@ -212,6 +211,18 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
             SentiencePointPath fromPath = paths.get(fromIndex);
             SentiencePointPath toPath = paths.get(toIndex);
 
+            if (toPath.isTeleport()) {
+                if (!allPoints.isEmpty()) {
+                    Location last = allPoints.get(allPoints.size() - 1);
+                    if (!last.equals(toPath.getLocation())) {
+                        allPoints.add(toPath.getLocation());
+                    }
+                } else {
+                    allPoints.add(toPath.getLocation());
+                }
+                continue;
+            }
+
             List<Location> segmentPoints = findSimplePath(
                     fromPath.getLocation(),
                     toPath.getLocation(),
@@ -232,7 +243,7 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
                 interpolatedSegment.addAll(steps);
             }
 
-            if (!allPoints.isEmpty()) {
+            if (!allPoints.isEmpty() && !interpolatedSegment.isEmpty()) {
                 interpolatedSegment.remove(0);
             }
 
@@ -241,6 +252,7 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
 
         return allPoints;
     }
+
 
     /**
      * Interpolates a linear path between two locations by adding intermediate points at equal distances.
