@@ -311,13 +311,13 @@ public class NpcsHandler {
     }
 
     /**
-     * Retrieves an NPC (Non-Player Character) from the internal cache using the given name.
+     * Retrieves an NPC (Non-Player Character) by name from the NPC cache.
      *
-     * @param npcName The name of the NPC to retrieve. Must not be null or empty.
-     * @return The SentienceNPC object associated with the specified name, or null if no NPC with the given name is found in the cache.
+     * @param npcName the name of the NPC to retrieve
+     * @return the NPC object associated with the given name, or null if no NPC is found
      */
     public SentienceNPC getNPC(String npcName) {
-        return this.npcCache.get(npcName);
+        return this.npcCache.getOrDefault(npcName, null);
     }
 
     /**

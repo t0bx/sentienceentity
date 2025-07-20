@@ -30,14 +30,20 @@
 
 package de.t0bx.sentienceEntity.update;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Scanner;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.stream.StreamSupport;
 
 public class UpdateManager {
 
@@ -49,14 +55,38 @@ public class UpdateManager {
 
     private void getVersion(final Consumer<String> consumer) {
         Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
-           try (InputStream inputStream = new URL("https://api.spigotmc.org/legacy/update.php?resource=124834").openStream()) {
-               Scanner scanner = new Scanner(inputStream);
-               if (scanner.hasNext()) {
-                   consumer.accept(scanner.next());
-               }
-           } catch (IOException exception) {
-               this.plugin.getLogger().warning("Failed to load update information: " + exception.getMessage());
-           }
+            try {
+                String url = "https://repository.t0bx.de/service/rest/v1/search?repository=spigotmc-releases";
+
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Accept", "application/json")
+                        .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                String json = response.body();
+
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(json);
+
+                JsonNode items = root.get("items");
+                if (!items.isArray() || items.isEmpty()) {
+                    consumer.accept("Unknown");
+                    return;
+                }
+
+                List<String> versions = StreamSupport.stream(items.spliterator(), false)
+                        .map(item -> item.path("version").asText())
+                        .toList();
+
+                String latest = versions.get(versions.size() - 1);
+
+                consumer.accept(latest);
+            } catch (IOException | InterruptedException exception) {
+                this.plugin.getLogger().log(Level.WARNING, "Error while checking for updates!", exception);
+            }
         });
     }
 
@@ -64,6 +94,8 @@ public class UpdateManager {
         this.plugin.getLogger().info("Checking for updates...");
         this.getVersion(version -> {
             String currentVersion = this.plugin.getDescription().getVersion();
+            if (currentVersion.equalsIgnoreCase("Unknown")) return;
+
             if (!currentVersion.equals(version)) {
                 this.plugin.getLogger().info("SentienceEntity got a update (" + currentVersion + " >> " + version + ")!");
                 this.plugin.getLogger().info("Download >> https://www.spigotmc.org/resources/124834/");

@@ -41,7 +41,10 @@ import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Getter
 public class SentienceNPC {
@@ -280,8 +283,13 @@ public class SentienceNPC {
                 0, 0, 0,
                 true
         );
+        var headRotationPacket = new PacketSetHeadRotation(this.getEntityId(), location.getYaw());
+
         for (PacketPlayer player : this.channels) {
-            player.sendPacket(entityTeleportPacket);
+            player.sendMultiplePackets(
+                    entityTeleportPacket,
+                    headRotationPacket
+            );
         }
     }
 
