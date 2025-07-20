@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "de.t0bx"
-version = "1.9"
+version = "1.9.1"
 
 java {
     toolchain {
@@ -71,8 +71,8 @@ publishing {
         maven {
             url = uri("https://repository.t0bx.de/repository/spigotmc-releases/")
             credentials {
-                username = System.getenv("REPO_USER")
-                password = System.getenv("REPO_PASSWORD")
+                username = project.findProperty("repoUser").toString()
+                password = project.findProperty("repoPassword").toString()
             }
         }
     }

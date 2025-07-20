@@ -54,7 +54,8 @@ public class SentienceHologram {
     private final int entityId;
     private final UUID uuid;
 
-    private final Location baseLocation;
+    @Setter
+    private Location baseLocation;
     private final Map<Integer, HologramLine> hologramLines;
 
     @Setter
@@ -152,6 +153,43 @@ public class SentienceHologram {
         }
 
         updateLinesAfterRemoval();
+    }
+
+    /**
+     * Updates the location of the hologram and all its associated lines, repositioning them
+     * based on the provided base location. This method recalculates and assigns new positions
+     * for each hologram line, taking into account their order and vertical spacing, and
+     * sends teleport packets to update all connected players.
+     *
+     * @param location the new base {@link Location} to which the hologram and its lines
+     *                 will be moved
+     */
+    public void updateLocation(Location location) {
+        this.setBaseLocation(location);
+        this.location = location.clone();
+
+        List<Map.Entry<Integer, HologramLine>> lines = new ArrayList<>(hologramLines.entrySet());
+        lines.sort(Map.Entry.comparingByKey());
+
+        for (int i = 0; i < lines.size(); i++) {
+            HologramLine line = lines.get(i).getValue();
+
+            Location newLineLocation = baseLocation.clone();
+            newLineLocation.add(0, 1.8 + (LINE_HEIGHT * (lines.size() - i - 1)), 0);
+
+            line.setLocation(newLineLocation);
+
+            var teleportPacket = new PacketTeleportEntity(
+                    line.getEntityId(),
+                    newLineLocation,
+                    0, 0, 0,
+                    true
+            );
+
+            for (PacketPlayer player : channels) {
+                player.sendPacket(teleportPacket);
+            }
+        }
     }
 
     private void updateLinesAfterRemoval() {
