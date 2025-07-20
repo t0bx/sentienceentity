@@ -283,8 +283,13 @@ public class SentienceNPC {
                 0, 0, 0,
                 true
         );
+        var headRotationPacket = new PacketSetHeadRotation(this.getEntityId(), location.getYaw());
+
         for (PacketPlayer player : this.channels) {
-            player.sendPacket(entityTeleportPacket);
+            player.sendMultiplePackets(
+                    entityTeleportPacket,
+                    headRotationPacket
+            );
         }
     }
 

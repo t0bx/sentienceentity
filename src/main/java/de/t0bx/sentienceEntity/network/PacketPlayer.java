@@ -75,8 +75,8 @@ public class PacketPlayer {
      *               {@code build()} method.
      */
     public void sendMultiplePackets(PacketWrapper... packet) {
-        for (PacketWrapper p : packet) {
-            channel.write(p.build());
+        for (PacketWrapper packets : packet) {
+            channel.write(packets.build());
         }
         channel.flush();
     }

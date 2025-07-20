@@ -196,6 +196,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         this.npcsHandler.createNPC(npcName, skinName, player.getLocation());
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "You've spawned a npc with the name '" + npcName + "'!"));
     }
 
     private void handleEditNpc(Player player, @NotNull String[] args) {
@@ -304,6 +305,11 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        if (this.hologramManager.getHologram(npcName) == null) {
+            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no hologram for the npc '" + npcName + "'! Use /se createHologram to create a hologram first!"));
+            return;
+        }
+
         this.hologramManager.show(player, npcName);
         this.hologramManager.addLine(npcName, text, true);
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "You have added a line to the hologram for the npc '" + npcName + "'."));
@@ -392,8 +398,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
         if (SentienceEntity.getInstance().isPAPER()) {
             player.sendMessage(component);
         } else {
-            String legacy = LegacyComponentSerializer.legacySection().serialize(component);
-            player.sendMessage(legacy);
+            SentienceEntity.getInstance().getAudiences().player(player).sendMessage(component);
         }
     }
 

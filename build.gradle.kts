@@ -32,6 +32,8 @@ dependencies {
     implementation("net.kyori:adventure-text-minimessage:4.23.0")
     implementation("net.kyori:adventure-text-serializer-legacy:4.23.0")
     implementation("net.kyori:adventure-text-serializer-gson:4.23.0")
+    // https://mvnrepository.com/artifact/net.kyori/adventure-platform-bukkit
+    implementation("net.kyori:adventure-platform-bukkit:4.4.0")
 
     implementation("org.bstats:bstats-bukkit:3.0.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.19.0")
