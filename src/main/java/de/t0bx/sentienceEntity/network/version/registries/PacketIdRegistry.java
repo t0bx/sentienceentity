@@ -96,6 +96,9 @@ public class PacketIdRegistry {
 
         // No changes for 1_21_7 from 1_21_6
         REGISTRY.put(ProtocolVersion.V1_21_7, v1_21_6);
+
+        // No changes for 1_21_8 from 1_21_6
+        REGISTRY.put(ProtocolVersion.V1_21_8, v1_21_6);
     }
 
     /**

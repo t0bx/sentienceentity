@@ -32,7 +32,10 @@ package de.t0bx.sentienceEntity.npc;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import de.t0bx.sentienceEntity.SentienceAPI;
 import de.t0bx.sentienceEntity.SentienceEntity;
+import de.t0bx.sentienceEntity.hologram.HologramManager;
+import de.t0bx.sentienceEntity.hologram.SentienceHologram;
 import de.t0bx.sentienceEntity.network.utils.NpcProfile;
 import de.t0bx.sentienceEntity.network.wrapper.packets.PacketPlayerInfoUpdate;
 import de.t0bx.sentienceEntity.utils.JsonDocument;
@@ -414,6 +417,11 @@ public class NpcsHandler {
         if (npc == null) return;
 
         npc.teleport(location);
+
+        SentienceHologram hologram = SentienceEntity.getApi().getHologramManager().getHologram(npcName);
+        if (hologram != null) {
+            hologram.updateLocation(location);
+        }
 
         this.jsonDocument.update(npcName + ".location-x", location.getX());
         this.jsonDocument.update(npcName + ".location-y", location.getY());

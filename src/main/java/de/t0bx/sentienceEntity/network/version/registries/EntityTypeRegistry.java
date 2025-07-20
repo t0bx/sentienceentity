@@ -75,6 +75,9 @@ public class EntityTypeRegistry {
 
         //for Protocol 771 nothing changed
         REGISTRY.put(ProtocolVersion.V1_21_7, v1_21_6);
+
+        //No changes from v1_21_6 to 1_21_8
+        REGISTRY.put(ProtocolVersion.V1_21_8, v1_21_6);
     }
 
     /**
