@@ -88,7 +88,7 @@ This Project uses Maven:
 ```xml
 <dependency>
     <groupId>de.t0bx</groupId>
-    <artifactId>SentienceEntity</artifactId>
+    <artifactId>sentienceentity</artifactId>
     <version>1.9.1</version>
     <scope>provided</scope>
 </dependency>
