@@ -1,6 +1,8 @@
 package de.t0bx.sentienceEntity.commands;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
+import de.t0bx.sentienceEntity.npc.NpcsHandler;
+import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import de.t0bx.sentienceEntity.path.SentiencePathHandler;
 import de.t0bx.sentienceEntity.path.serializer.PathSerializer;
 import net.kyori.adventure.text.Component;
@@ -15,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -23,11 +26,13 @@ public class SentiencePathCommand implements CommandExecutor, TabCompleter {
     private final MiniMessage miniMessage;
     private final String prefix;
     private final SentiencePathHandler sentiencePathHandler;
+    private final NpcsHandler npcsHandler;
 
     public SentiencePathCommand(SentienceEntity sentienceEntity) {
         this.miniMessage = MiniMessage.miniMessage();
         this.prefix = sentienceEntity.getPrefix();
         this.sentiencePathHandler = sentienceEntity.getSentiencePathHandler();
+        this.npcsHandler = sentienceEntity.getNpcshandler();
     }
 
     @Override
@@ -123,7 +128,26 @@ public class SentiencePathCommand implements CommandExecutor, TabCompleter {
             }
 
             case "apply" -> {
-                this.sentiencePathHandler.applyPath(SentienceEntity.getApi().getNpcsHandler().getNPC("test").getEntityId(), "Test");
+                if (args.length != 3) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sp apply <pathname> <npcname> <dark_gray>| <gray>Apply the path to a npc"));
+                    return true;
+                }
+
+                String pathName = args[1];
+                if (!this.sentiencePathHandler.doesPathNameExist(pathName)) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "The path '" + pathName + "' does not exist!"));
+                    return true;
+                }
+
+                String npcName = args[2];
+                SentienceNPC npc = this.npcsHandler.getNPC(npcName);
+                if (npc == null) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "The npc '" + npcName + "' does not exist!"));
+                    return true;
+                }
+
+                this.sentiencePathHandler.applyPath(npc.getEntityId(), pathName);
+                return true;
             }
 
             default -> sendHelp(player);
@@ -138,6 +162,7 @@ public class SentiencePathCommand implements CommandExecutor, TabCompleter {
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sp removePoint <pathname> <point index> <dark_gray>| <gray>Remove a point from a path with the given name"));
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sp listPoints <pathname> <dark_gray>| <gray>List all points of a path with the given name"));
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sp list <dark_gray>| <gray>List all paths"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sp apply <pathname> <npcname> <dark_gray>| <gray>Apply the path to a npc"));
     }
 
     private void handleCreatePath(Player player, String pathName) {
@@ -239,16 +264,66 @@ public class SentiencePathCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String @NotNull [] strings) {
-        return List.of();
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String @NotNull [] args) {
+        if (!(sender instanceof Player)) return List.of();
+
+        if (args.length == 1) {
+            return List.of("create", "remove", "addPoint", "removePoint", "listPoints", "list", "apply");
+        }
+
+        String subCommand = args[0].toLowerCase();
+
+        return switch (subCommand) {
+            case "create" -> {
+                if (args.length == 2) {
+                    yield List.of("<pathname>");
+                }
+                yield Collections.emptyList();
+            }
+
+            case "remove", "listpoints" -> {
+                if (args.length == 2) {
+                    yield this.sentiencePathHandler.getPaths().keySet().stream().toList();
+                }
+                yield Collections.emptyList();
+            }
+
+            case "addpoint" -> {
+                if (args.length == 2) {
+                    yield this.sentiencePathHandler.getPaths().keySet().stream().toList();
+                } else if (args.length == 3) {
+                    yield List.of("Walk", "Teleport");
+                }
+                yield Collections.emptyList();
+            }
+
+            case "removepoint" -> {
+                if (args.length == 2) {
+                    yield this.sentiencePathHandler.getPaths().keySet().stream().toList();
+                } else if (args.length == 3) {
+                    yield List.of("<pointIndex>");
+                }
+                yield Collections.emptyList();
+            }
+
+            case "apply" -> {
+                if (args.length == 2) {
+                    yield this.sentiencePathHandler.getPaths().keySet().stream().toList();
+                } else if (args.length == 3) {
+                    yield this.npcsHandler.getNPCNames();
+                }
+                yield Collections.emptyList();
+            }
+
+            default -> Collections.emptyList();
+        };
     }
 
     private void sendMessage(Player player, Component component) {
         if (SentienceEntity.getInstance().isPAPER()) {
             player.sendMessage(component);
         } else {
-            String legacy = LegacyComponentSerializer.legacySection().serialize(component);
-            player.sendMessage(legacy);
+            SentienceEntity.getInstance().getAudiences().player(player).sendMessage(component);
         }
     }
 }

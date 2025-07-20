@@ -12,6 +12,7 @@ import de.t0bx.sentienceEntity.path.serializer.PathSerializer;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.IOException;
@@ -32,6 +33,19 @@ import java.util.logging.Level;
  */
 public record SentiencePathExecutor(int entityId, SentiencePath path) {
 
+    /**
+     * Prepares and initializes the execution of a movement path for an entity asynchronously.
+     * This method attempts to load a pre-saved path for the entity. If no saved path is found,
+     * it ensures the path is generated and interpolated, then saves the generated path for
+     * future use. Once the path is successfully loaded or generated, it starts the navigation.
+     *
+     * Asynchronous processing is used to avoid blocking the main thread while performing
+     * potentially time-consuming operations such as file I/O or path interpolation. Any
+     * exceptions or issues encountered during the path loading or saving process are logged.
+     *
+     * If the path is successfully loaded, the NPC's movement is initiated. Otherwise, warnings
+     * are logged to indicate that no valid path was found.
+     */
     public void preparePath() {
         CompletableFuture
                 .supplyAsync(() -> {
@@ -39,7 +53,10 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
                         List<Location> locationsPath = PathSerializer.loadPath(path.getName());
                         if (locationsPath == null) {
                             locationsPath = ensurePathLoaded(path);
-                            PathSerializer.savePath(path.getName(), locationsPath);
+
+                            if (locationsPath != null) {
+                                PathSerializer.savePath(path.getName(), locationsPath);
+                            }
                         }
                         return locationsPath;
                     } catch (IOException exception) {
@@ -210,6 +227,21 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
 
             SentiencePointPath fromPath = paths.get(fromIndex);
             SentiencePointPath toPath = paths.get(toIndex);
+
+            Location loc = toPath.getLocation();
+            World world = loc.getWorld();
+            Block below = world.getBlockAt(loc.getBlockX(), loc.getBlockY() - 1, loc.getBlockZ());
+
+            if (!toPath.isTeleport() && below.isPassable()) {
+                SentienceEntity.getInstance().getLogger().severe(
+                        "Error while trying to calculate Path '" + path.getName() + "'  on index " + toIndex + " (" + loc.getX() + ", " + loc.getY() + ", " + loc.getZ() +
+                                ") is not reachable with walking! " +
+                                "Please make sure that it's possible to walk! " +
+                                "Max. 1 block high, Max. 1 block deep and no jumps! " +
+                                "Otherwise use teleport!"
+                );
+                return null;
+            }
 
             if (toPath.isTeleport()) {
                 if (!allPoints.isEmpty()) {

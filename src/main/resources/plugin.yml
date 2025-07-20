@@ -8,7 +8,3 @@ commands:
     permission: se.command
     aliases:
       - sentienceentity
-  sp:
-    permission: se.path
-    aliases:
-      - sentiencepath

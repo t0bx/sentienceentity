@@ -7,6 +7,7 @@ import de.t0bx.sentienceEntity.path.data.SentiencePointPath;
 import de.t0bx.sentienceEntity.utils.JsonDocument;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
