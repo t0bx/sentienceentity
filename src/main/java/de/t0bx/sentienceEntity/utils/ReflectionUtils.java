@@ -35,6 +35,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReflectionUtils {
 
+    /**
+     * Retrieves all declared fields of the specified class.
+     * This includes private, protected, and public fields of the class.
+     * All returned fields are set to be accessible.
+     *
+     * @param cls The class whose declared fields are to be retrieved.
+     *            If null, an empty array of fields is returned.
+     * @return An array of {@code Field} objects representing all declared fields of the specified class.
+     *         If the input class is null, an empty array is returned.
+     */
     public static Field[] getFields(final Class<?> cls) {
         if (cls == null) {
             return new Field[0];
@@ -46,6 +56,15 @@ public class ReflectionUtils {
         return declaredFields;
     }
 
+    /**
+     * Retrieves a specific declared field from a given class or its superclasses.
+     * The method attempts to locate the field by name and make it accessible.
+     * If the field is not found in the class, the superclass hierarchy is traversed.
+     *
+     * @param cls  The class from which the field is to be retrieved. If null, the method returns null.
+     * @param name The name of the field to retrieve. Must not be null.
+     * @return The {@code Field} object representing the specified field, or null if the field cannot be found.
+     */
     public static Field getField(final Class<?> cls, final String name) {
         if (cls == null) {
             return null;
@@ -62,6 +81,18 @@ public class ReflectionUtils {
         return null;
     }
 
+    /**
+     * Retrieves a field from the specified class or its hierarchy that matches the given data type
+     * and index. The method searches through all declared fields of the class, including private,
+     * protected, and public ones, and considers the superclass hierarchy if the field is not found
+     * in the specified class.
+     *
+     * @param cls      The class from which the field is to be retrieved. If null, the method returns null.
+     * @param dataType The data type of the field to retrieve. If null, the method returns null.
+     * @param index    The index specifying which field of the given type to retrieve, starting from 0.
+     * @return The {@code Field} object representing the specified field if found, or null if no such
+     *         field exists in the class or its hierarchy.
+     */
     public static Field getField(final Class<?> cls, final Class<?> dataType, final int index) {
         if (dataType == null || cls == null) {
             return null;
@@ -80,7 +111,18 @@ public class ReflectionUtils {
         return null;
     }
 
-
+    /**
+     * Generates a unique and valid entity ID for a Minecraft entity by reflecting
+     * on the underlying class and modifying the entity ID count field.
+     *
+     * This method dynamically inspects the entity class to locate a static field
+     * storing the entity ID count. Depending on the type of this field, it updates
+     * the count either as an {@code AtomicInteger} or a primitive int value.
+     *
+     * @return A unique integer representing a valid entity ID.
+     * @throws RuntimeException if the entity class or entity count field is
+     *         inaccessible or not found.
+     */
     public static int generateValidMinecraftEntityId() {
         try {
             Class<?> entityClass = Class.forName("net.minecraft.world.entity.Entity");

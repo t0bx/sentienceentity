@@ -31,21 +31,24 @@
 package de.t0bx.sentienceEntity;
 
 import de.t0bx.sentienceEntity.commands.SentienceEntityCommand;
+import de.t0bx.sentienceEntity.commands.SentiencePathCommand;
 import de.t0bx.sentienceEntity.config.ConfigFileManager;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.listener.NpcSpawnListener;
 import de.t0bx.sentienceEntity.listener.PlayerMoveListener;
 import de.t0bx.sentienceEntity.listener.PlayerToggleSneakListener;
-import de.t0bx.sentienceEntity.npc.NpcsHandler;
 import de.t0bx.sentienceEntity.network.PacketController;
 import de.t0bx.sentienceEntity.network.channel.ChannelAccess;
 import de.t0bx.sentienceEntity.network.channel.PaperChannelAccess;
 import de.t0bx.sentienceEntity.network.channel.SpigotChannelAccess;
 import de.t0bx.sentienceEntity.network.handler.PacketReceiveHandler;
+import de.t0bx.sentienceEntity.npc.NpcsHandler;
+import de.t0bx.sentienceEntity.path.SentiencePathHandler;
 import de.t0bx.sentienceEntity.update.UpdateManager;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
 import lombok.Getter;
 import lombok.Setter;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -57,31 +60,29 @@ public final class SentienceEntity extends JavaPlugin {
     @Getter
     private static SentienceEntity instance;
 
-    private UpdateManager updateManager;
-
-    private final String prefix = "<gradient:#0a0f2c:#0f4a6b:#00cfff><bold>SentienceEntity</bold></gradient> <dark_gray>| <gray>";
-
-    private SkinFetcher skinFetcher;
-
-    private PacketController packetController;
-
-    private NpcsHandler npcshandler;
-
-    private HologramManager hologramManager;
-
-    private PacketReceiveHandler packetReceiveHandler;
-
-    @Getter
-    private static SentienceAPI api;
-
     private boolean PAPER;
-
     private ConfigFileManager configFileManager;
 
     @Setter
     private boolean bStatsEnabled;
 
     private Metrics metrics;
+
+    private UpdateManager updateManager;
+
+    private final String prefix = "<gradient:#0a0f2c:#0f4a6b:#00cfff>SentienceEntity</gradient> <dark_gray>| <gray>";
+
+    private SkinFetcher skinFetcher;
+    private PacketController packetController;
+    private NpcsHandler npcshandler;
+    private HologramManager hologramManager;
+    private SentiencePathHandler sentiencePathHandler;
+    private PacketReceiveHandler packetReceiveHandler;
+
+    @Getter
+    private static SentienceAPI api;
+
+    private BukkitAudiences audiences;
 
     @Override
     public void onLoad() {
@@ -104,11 +105,12 @@ public final class SentienceEntity extends JavaPlugin {
 
         if (this.bStatsEnabled) {
             this.getLogger().info("bStats is enabled for SentienceEntity.");
-            int bStatsPluginId = 26431;
-            this.metrics = new Metrics(this, bStatsPluginId);
+            this.metrics = new Metrics(this, 26431);
         } else {
             this.getLogger().info("bStats is disabled for SentienceEntity.");
         }
+
+        if (!isPAPER()) this.audiences = BukkitAudiences.create(this);
 
         this.updateManager = new UpdateManager(this);
         this.updateManager.checkForUpdate();
@@ -119,6 +121,8 @@ public final class SentienceEntity extends JavaPlugin {
 
         this.npcshandler = new NpcsHandler();
         this.hologramManager = new HologramManager();
+        //this.sentiencePathHandler = new SentiencePathHandler();
+
         this.packetReceiveHandler = new PacketReceiveHandler(this.npcshandler, this.packetController);
         this.getLogger().info("Loaded " + this.npcshandler.getLoadedSize() + " NPCs.");
 
@@ -126,6 +130,7 @@ public final class SentienceEntity extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new PlayerMoveListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerToggleSneakListener(), this);
         this.getCommand("se").setExecutor(new SentienceEntityCommand(this));
+        //this.getCommand("sp").setExecutor(new SentiencePathCommand(this));
 
         api = new SentienceAPI();
         this.getLogger().info("SentienceEntity has been enabled!");
@@ -150,6 +155,10 @@ public final class SentienceEntity extends JavaPlugin {
             if (this.metrics != null) {
                 this.metrics.shutdown();
             }
+        }
+
+        if (this.audiences != null) {
+            this.audiences.close();
         }
     }
 
