@@ -220,7 +220,7 @@ public class HologramManager {
      *         or null if no hologram exists for the given NPC name
      */
     public SentienceHologram getHologram(String npcName) {
-        return this.cachedHolograms.get(npcName);
+        return this.cachedHolograms.getOrDefault(npcName, null);
     }
 
     /**
