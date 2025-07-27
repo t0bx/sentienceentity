@@ -5,9 +5,7 @@ import de.t0bx.sentienceEntity.npc.NpcsHandler;
 import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import de.t0bx.sentienceEntity.path.SentiencePathHandler;
 import de.t0bx.sentienceEntity.path.serializer.PathSerializer;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -20,6 +18,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+
+import static de.t0bx.sentienceEntity.utils.MessageUtils.sendMessage;
 
 public class SentiencePathCommand implements CommandExecutor, TabCompleter {
 
@@ -317,13 +317,5 @@ public class SentiencePathCommand implements CommandExecutor, TabCompleter {
 
             default -> Collections.emptyList();
         };
-    }
-
-    private void sendMessage(Player player, Component component) {
-        if (SentienceEntity.getInstance().isPAPER()) {
-            player.sendMessage(component);
-        } else {
-            SentienceEntity.getInstance().getAudiences().player(player).sendMessage(component);
-        }
     }
 }

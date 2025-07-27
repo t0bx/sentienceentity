@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "de.t0bx"
-version = "1.9.1"
+version = "2.0.0"
 
 java {
     toolchain {

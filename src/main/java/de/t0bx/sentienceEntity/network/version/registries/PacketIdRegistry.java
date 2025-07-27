@@ -53,6 +53,7 @@ public class PacketIdRegistry {
         v1_21.put(PacketId.TELEPORT_ENTITY, 0x70);
         v1_21.put(PacketId.INTERACT_ENTITY, 0x16);
         v1_21.put(PacketId.SET_PLAYER_TEAM, 0x60);
+        v1_21.put(PacketId.SET_EQUIPMENT, 0x5B);
         REGISTRY.put(ProtocolVersion.V1_21, v1_21);
 
         //No Changes from v1_21 -> v1_21_1
@@ -67,7 +68,8 @@ public class PacketIdRegistry {
                 PacketId.REMOVE_ENTITY, 0x47,
                 PacketId.TELEPORT_ENTITY, 0x20,
                 PacketId.INTERACT_ENTITY, 0x18,
-                PacketId.SET_PLAYER_TEAM, 0x67
+                PacketId.SET_PLAYER_TEAM, 0x67,
+                PacketId.SET_EQUIPMENT, 0x60
         ));
         REGISTRY.put(ProtocolVersion.V1_21_2, v1_21_2);
 
@@ -85,7 +87,8 @@ public class PacketIdRegistry {
                 PacketId.UPDATE_ENTITY_ROTATION, 0x31,
                 PacketId.REMOVE_ENTITY, 0x46,
                 PacketId.TELEPORT_ENTITY, 0x1F,
-                PacketId.SET_PLAYER_TEAM, 0x66
+                PacketId.SET_PLAYER_TEAM, 0x66,
+                PacketId.SET_EQUIPMENT, 0x5F
         ));
         REGISTRY.put(ProtocolVersion.V1_21_5, v1_21_5);
 

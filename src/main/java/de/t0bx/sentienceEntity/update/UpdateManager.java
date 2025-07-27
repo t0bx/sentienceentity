@@ -48,6 +48,10 @@ import java.util.stream.StreamSupport;
 public class UpdateManager {
 
     private final JavaPlugin plugin;
+    private final String red = "\u001B[31m";
+    private final String reset = "\u001B[0m";
+    private final String green = "\u001B[32m";
+    private final String yellow = "\u001B[33m";
 
     public UpdateManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -94,13 +98,16 @@ public class UpdateManager {
         this.plugin.getLogger().info("Checking for updates...");
         this.getVersion(version -> {
             String currentVersion = this.plugin.getDescription().getVersion();
-            if (currentVersion.equalsIgnoreCase("Unknown")) return;
+            int currentVersionId = Integer.parseInt(currentVersion.replace(".", ""));
+            int versionId = Integer.parseInt(version.replace(".", ""));
 
-            if (!currentVersion.equals(version)) {
-                this.plugin.getLogger().info("SentienceEntity got a update (" + currentVersion + " >> " + version + ")!");
-                this.plugin.getLogger().info("Download >> https://www.spigotmc.org/resources/124834/");
+            if (currentVersionId == versionId) {
+                this.plugin.getLogger().info(green + "SentienceEntity is up to date!" + reset);
+            } else if (currentVersionId < versionId) {
+                this.plugin.getLogger().info(yellow + "SentienceEntity got a update (" + currentVersion + " >> " + version + ")!" + reset);
+                this.plugin.getLogger().info(yellow + "Download >> https://www.spigotmc.org/resources/124834/" + reset);
             } else {
-                this.plugin.getLogger().info("SentienceEntity is up to date!");
+                this.plugin.getLogger().info(red + "You are running an unsupported version of SentienceEntity, note that some features may not work correctly!" + reset);
             }
         });
     }
