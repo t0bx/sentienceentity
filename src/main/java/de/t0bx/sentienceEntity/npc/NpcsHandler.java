@@ -36,6 +36,7 @@ import de.t0bx.sentienceEntity.SentienceAPI;
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.hologram.SentienceHologram;
+import de.t0bx.sentienceEntity.network.inventory.equipment.EquipmentSlot;
 import de.t0bx.sentienceEntity.network.utils.NpcProfile;
 import de.t0bx.sentienceEntity.network.wrapper.packets.PacketPlayerInfoUpdate;
 import de.t0bx.sentienceEntity.utils.JsonDocument;
@@ -44,8 +45,12 @@ import de.t0bx.sentienceEntity.utils.SkinFetcher;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,7 +84,7 @@ public class NpcsHandler {
      * @param location     The location where the NPC will be spawned.
      * @param persistent   Whether the NPC should be saved persistently for future use.
      */
-    public void createNPC(String npcName, String playerName, Location location, boolean persistent) {
+    public void createNPC(String npcName, String playerName, EntityType entityType, Location location, boolean persistent) {
         UUID npcUUID = UUID.randomUUID();
 
         this.skinFetcher.fetchSkin(playerName, (skinValue, skinSignature) -> {
@@ -89,9 +94,10 @@ public class NpcsHandler {
 
             List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
             properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
-            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID, properties);
+            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID);
+            npcProfile.setProperties(properties);
 
-            SentienceNPC npc = new SentienceNPC(npcEntityId, npcProfile);
+            SentienceNPC npc = new SentienceNPC(npcName, npcEntityId, entityType, npcProfile);
             npc.setLocation(location);
 
             this.npcCache.put(npcName, npc);
@@ -99,7 +105,7 @@ public class NpcsHandler {
             this.npcIds.add(npc.getEntityId());
 
             if (persistent) {
-                this.saveNPCtoFile(npcName, location, skinValue, skinSignature);
+                this.saveNPCtoFile(npc);
             }
 
             for (Player player : Bukkit.getOnlinePlayers()) {
@@ -117,29 +123,48 @@ public class NpcsHandler {
      * @param playerName The name of the player whose skin is used for the NPC.
      * @param location   The location where the NPC will be spawned.
      */
-    public void createNPC(String npcName, String playerName, Location location) {
+    public void createNPC(String npcName, EntityType entityType, @Nullable String playerName, Location location) {
         UUID npcUUID = UUID.randomUUID();
 
-        this.skinFetcher.fetchSkin(playerName, (skinValue, skinSignature) -> {
-            if (skinValue == null && skinSignature == null) return;
+        int npcEntityId = ReflectionUtils.generateValidMinecraftEntityId();
 
-            int npcEntityId = ReflectionUtils.generateValidMinecraftEntityId();
+        if (playerName != null) {
+            this.skinFetcher.fetchSkin(playerName, (skinValue, skinSignature) -> {
+                if (skinValue == null && skinSignature == null) return;
 
-            List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
-            properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
-            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID, properties);
 
-            SentienceNPC npc = new SentienceNPC(npcEntityId, npcProfile);
-            npc.setLocation(location);
+                List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
+                properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
+                NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID);
+                npcProfile.setProperties(properties);
 
-            this.npcCache.put(npcName, npc);
-            this.npcIdCache.put(npc.getEntityId(), npcName);
-            this.npcIds.add(npc.getEntityId());
-            this.saveNPCtoFile(npcName, location, skinValue, skinSignature);
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                this.spawnNPC(npcName, player);
-            }
-        });
+                SentienceNPC npc = new SentienceNPC(npcName, npcEntityId, entityType, npcProfile);
+                npc.setLocation(location);
+
+                this.npcCache.put(npcName, npc);
+                this.npcIdCache.put(npc.getEntityId(), npcName);
+                this.npcIds.add(npc.getEntityId());
+
+                this.saveNPCtoFile(npc);
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    this.spawnNPC(npcName, player);
+                }
+            });
+            return;
+        }
+
+        NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID);
+        SentienceNPC npc = new SentienceNPC(npcName, npcEntityId, entityType, npcProfile);
+        npc.setLocation(location);
+
+        this.npcCache.put(npcName, npc);
+        this.npcIdCache.put(npc.getEntityId(), npcName);
+        this.npcIds.add(npc.getEntityId());
+
+        this.saveNPCtoFile(npc);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            this.spawnNPC(npcName, player);
+        }
     }
 
     /**
@@ -153,22 +178,23 @@ public class NpcsHandler {
      * @param skinValue       The value of the NPC's skin texture.
      * @param skinSignature   The signature for validating the NPC's skin texture.
      */
-    public void createNPC(String npcName, Location location, String skinValue, String skinSignature) {
+    public void createNPC(String npcName, EntityType entityType, Location location, String skinValue, String skinSignature) {
         UUID npcUUID = UUID.randomUUID();
 
         int npcEntityId = ReflectionUtils.generateValidMinecraftEntityId();
 
         List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
         properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
-        NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID, properties);
+        NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID);
+        npcProfile.setProperties(properties);
 
-        SentienceNPC npc = new SentienceNPC(npcEntityId, npcProfile);
+        SentienceNPC npc = new SentienceNPC(npcName, npcEntityId, entityType, npcProfile);
         npc.setLocation(location);
 
         this.npcCache.put(npcName, npc);
         this.npcIdCache.put(npc.getEntityId(), npcName);
         this.npcIds.add(npc.getEntityId());
-        this.saveNPCtoFile(npcName, location, skinValue, skinSignature);
+        this.saveNPCtoFile(npc);
         for (Player player : Bukkit.getOnlinePlayers()) {
             this.spawnNPC(npcName, player);
         }
@@ -187,7 +213,7 @@ public class NpcsHandler {
      * @param callback   A Runnable that is executed after the NPC is created
      *                   or if the creation process fails. Can be null.
      */
-    public void createNPC(String npcName, String playerName, Location location, Runnable callback) {
+    public void createNPC(String npcName, String playerName, EntityType entityType, Location location, Runnable callback) {
         UUID npcUUID = UUID.randomUUID();
 
         this.skinFetcher.fetchSkin(playerName, (skinValue, skinSignature) -> {
@@ -200,15 +226,16 @@ public class NpcsHandler {
 
             List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
             properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
-            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID, properties);
+            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID);
+            npcProfile.setProperties(properties);
 
-            SentienceNPC npc = new SentienceNPC(npcEntityId, npcProfile);
+            SentienceNPC npc = new SentienceNPC(npcName, npcEntityId, entityType, npcProfile);
             npc.setLocation(location);
 
             this.npcCache.put(npcName, npc);
             this.npcIdCache.put(npc.getEntityId(), npcName);
             this.npcIds.add(npc.getEntityId());
-            this.saveNPCtoFile(npcName, location, skinValue, skinSignature);
+            this.saveNPCtoFile(npc);
 
             for (Player player : Bukkit.getOnlinePlayers()) {
                 this.spawnNPC(npcName, player);
@@ -279,6 +306,8 @@ public class NpcsHandler {
             String npcName = entry.getKey();
             JsonObject data = entry.getValue().getAsJsonObject();
 
+            EntityType entityType = EntityType.valueOf(data.get("type").getAsString().toUpperCase());
+
             double x = data.get("location-x").getAsDouble();
             double y = data.get("location-y").getAsDouble();
             double z = data.get("location-z").getAsDouble();
@@ -290,22 +319,37 @@ public class NpcsHandler {
 
             Location location = new Location(Bukkit.getWorld(worldName), x, y, z, yaw, pitch);
 
-            String skinValue = data.get("skin-value").getAsString();
-            String skinSignature = data.get("skin-signature").getAsString();
-
             UUID npcUUID = UUID.randomUUID();
             int npcEntityId = ReflectionUtils.generateValidMinecraftEntityId();
 
-            List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
-            properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
-            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID, properties);
+            NpcProfile npcProfile = new NpcProfile("", npcEntityId, npcUUID);
 
-            SentienceNPC npc = new SentienceNPC(npcEntityId, npcProfile);
+            if (entityType == EntityType.PLAYER) {
+                String skinValue = data.get("skin-value").getAsString();
+                String skinSignature = data.get("skin-signature").getAsString();
+
+                List<PacketPlayerInfoUpdate.Property> properties = new ArrayList<>();
+                properties.add(new PacketPlayerInfoUpdate.Property("textures", skinValue, skinSignature));
+                npcProfile.setProperties(properties);
+            }
+
+            SentienceNPC npc = new SentienceNPC(npcName, npcEntityId, entityType, npcProfile);
             npc.setLocation(location);
 
             JsonObject settings = data.getAsJsonObject("settings");
             npc.setShouldLookAtPlayer(settings.get("shouldLookAtPlayer").getAsBoolean());
             npc.setShouldSneakWithPlayer(settings.get("shouldSneakWithPlayer").getAsBoolean());
+
+            if (settings.has("equipment")) {
+                JsonObject equipment = settings.getAsJsonObject("equipment");
+                for (Map.Entry<String, JsonElement> equipmentEntry : equipment.entrySet()) {
+                    EquipmentSlot equipmentSlot = EquipmentSlot.valueOf(equipmentEntry.getKey().toUpperCase());
+                    Material material = Material.valueOf(equipmentEntry.getValue().getAsString());
+                    if (material == Material.AIR) continue;
+
+                    npc.addEquipment(equipmentSlot, new ItemStack(material));
+                }
+            }
 
             this.npcCache.put(npcName, npc);
             this.npcIds.add(npc.getEntityId());
@@ -437,6 +481,29 @@ public class NpcsHandler {
         }
     }
 
+    public void updateEquipment(String npcName, EquipmentSlot equipmentSlot, @Nullable ItemStack itemStack) {
+        this.jsonDocument = JsonDocument.loadDocument(this.file);
+        SentienceNPC npc = this.npcCache.get(npcName);
+        if (this.jsonDocument == null) return;
+        if (npc == null) return;
+
+        if (itemStack != null) {
+            npc.addEquipment(equipmentSlot, itemStack);
+
+            this.jsonDocument.update(npcName + ".settings.equipment." + equipmentSlot.name().toLowerCase(), itemStack.getType().name().toUpperCase());
+        } else {
+            npc.removeEquipment(equipmentSlot);
+
+            this.jsonDocument.update(npcName + ".settings.equipment." + equipmentSlot.name().toLowerCase(), Material.AIR.name().toUpperCase());
+        }
+
+        try {
+            this.jsonDocument.save(this.file);
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
+    }
+
     /**
      * Toggles the "look at player" behavior for the specified NPC (Non-Player Character).
      * Updates the associated NPC's setting to either enable or disable the behavior
@@ -555,7 +622,7 @@ public class NpcsHandler {
         this.npcIdCache.clear();
     }
 
-    private void saveNPCtoFile(String npcName, Location location, String skinValue, String skinSignature) {
+    private void saveNPCtoFile(SentienceNPC npc) {
         try {
             this.jsonDocument = JsonDocument.loadDocument(this.file);
 
@@ -568,8 +635,8 @@ public class NpcsHandler {
                 existingData = new JsonObject();
             }
 
-            JsonObject npcObject = this.getJsonObject(location, skinValue, skinSignature);
-            existingData.add(npcName, npcObject);
+            JsonObject npcObject = this.getJsonObject(npc);
+            existingData.add(npc.getName(), npcObject);
 
             this.jsonDocument.setJsonObject(existingData);
             this.jsonDocument.save(this.file);
@@ -578,16 +645,22 @@ public class NpcsHandler {
         }
     }
 
-    private @NotNull JsonObject getJsonObject(Location location, String skinValue, String skinSignature) {
+    private @NotNull JsonObject getJsonObject(SentienceNPC npc) {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("location-x", location.getX());
-        jsonObject.addProperty("location-y", location.getY());
-        jsonObject.addProperty("location-z", location.getZ());
-        jsonObject.addProperty("location-yaw", location.getYaw());
-        jsonObject.addProperty("location-pitch", location.getPitch());
-        jsonObject.addProperty("location-world", location.getWorld().getName());
-        jsonObject.addProperty("skin-value", skinValue);
-        jsonObject.addProperty("skin-signature", skinSignature);
+        jsonObject.addProperty("type", npc.getEntityType().name());
+
+        jsonObject.addProperty("location-x", npc.getLocation().getX());
+        jsonObject.addProperty("location-y", npc.getLocation().getY());
+        jsonObject.addProperty("location-z", npc.getLocation().getZ());
+        jsonObject.addProperty("location-yaw", npc.getLocation().getYaw());
+        jsonObject.addProperty("location-pitch", npc.getLocation().getPitch());
+        jsonObject.addProperty("location-world", npc.getLocation().getWorld().getName());
+
+        if (npc.getEntityType() == EntityType.PLAYER) {
+            PacketPlayerInfoUpdate.Property property = npc.getProfile().getProperties().get(0);
+            jsonObject.addProperty("skin-value", property.value());
+            jsonObject.addProperty("skin-signature", property.signature());
+        }
 
         JsonObject settingsObject = new JsonObject();
         settingsObject.addProperty("shouldLookAtPlayer", false);

@@ -40,5 +40,6 @@ public enum PacketId {
     REMOVE_ENTITY,
     TELEPORT_ENTITY,
     INTERACT_ENTITY,
-    SET_PLAYER_TEAM;
+    SET_PLAYER_TEAM,
+    SET_EQUIPMENT;
 }

@@ -33,10 +33,13 @@ package de.t0bx.sentienceEntity.hologram;
 import com.google.gson.JsonObject;
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.npc.NpcsHandler;
+import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import de.t0bx.sentienceEntity.utils.JsonDocument;
 import de.t0bx.sentienceEntity.utils.ReflectionUtils;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,7 +104,13 @@ public class HologramManager {
     public void createHologram(String npcName, Location location) {
         if (this.cachedHolograms.containsKey(npcName)) return;
 
-        SentienceHologram hologram = new SentienceHologram(ReflectionUtils.generateValidMinecraftEntityId(), UUID.randomUUID(), location);
+
+        SentienceHologram hologram = new SentienceHologram(
+                ReflectionUtils.generateValidMinecraftEntityId(),
+                this.npcshandler.getNPC(npcName).getEntityType(),
+                UUID.randomUUID(),
+                location
+        );
         this.cachedHolograms.put(npcName, hologram);
     }
 
@@ -122,6 +131,16 @@ public class HologramManager {
         hologram.addLine(line);
         if (persistent) {
             this.saveLineToFile(npcName, line);
+        }
+    }
+
+    public void addLine(String npcName, ItemStack itemStack, boolean persistent) {
+        if (!this.cachedHolograms.containsKey(npcName)) return;
+
+        SentienceHologram hologram = this.cachedHolograms.get(npcName);
+        hologram.addLine(itemStack);
+        if (persistent) {
+
         }
     }
 
@@ -326,10 +345,12 @@ public class HologramManager {
 
         JsonObject npcObject = jsonDocument.get(npcName).getAsJsonObject();
 
+        SentienceNPC npc = this.npcshandler.getNPC(npcName);
         SentienceHologram hologram = new SentienceHologram(
                 ReflectionUtils.generateValidMinecraftEntityId(),
+                npc.getEntityType(),
                 UUID.randomUUID(),
-                this.npcshandler.getNPC(npcName).getLocation()
+                npc.getLocation()
         );
 
         int index = 0;
