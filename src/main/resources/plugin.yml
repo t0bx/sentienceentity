@@ -12,3 +12,7 @@ commands:
     permission: se.path
     aliases:
       - sentiencepath
+  sh:
+    permission: se.hologram
+    aliases:
+      - sentiencehologram

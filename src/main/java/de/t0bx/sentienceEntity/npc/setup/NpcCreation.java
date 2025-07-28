@@ -1,13 +1,10 @@
 package de.t0bx.sentienceEntity.npc.setup;
 
-import de.t0bx.sentienceEntity.SentienceEntity;
-import de.t0bx.sentienceEntity.boundingbox.BoundingBoxRegistry;
 import de.t0bx.sentienceEntity.inventory.InventoryProvider;
 import de.t0bx.sentienceEntity.network.version.registries.ItemIdRegistry;
-import de.t0bx.sentienceEntity.utils.ItemProvider;
+import de.t0bx.sentienceEntity.utils.item.ItemProvider;
 import lombok.Data;
 import lombok.Getter;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;

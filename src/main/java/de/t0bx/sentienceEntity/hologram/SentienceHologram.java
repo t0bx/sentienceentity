@@ -341,7 +341,7 @@ public class SentienceHologram {
      * @param index   the index of the hologram line to update
      * @param newText the new text to set for the specified hologram line
      */
-    public void updateLine(int index, String newText) {
+    public void updateLineText(int index, String newText) {
         if (!hologramLines.containsKey(index)) return;
 
         HologramLine line = hologramLines.get(index);
@@ -353,6 +353,23 @@ public class SentienceHologram {
 
         var metadata = new PacketSetEntityMetadata(line.getEntityId(), List.of(
                 new MetadataEntry(2, MetadataType.OPTIONAL_TEXT_COMPONENT, Optional.of(component))
+        ));
+
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(metadata);
+        }
+    }
+
+    public void updateLineItemStack(int index, ItemStack newItemStack) {
+        if (!hologramLines.containsKey(index)) return;
+
+        HologramLine line = hologramLines.get(index);
+        if (line == null) return;
+
+        line.setItemStack(newItemStack);
+
+        var metadata = new PacketSetEntityMetadata(line.getEntityId(), List.of(
+                new MetadataEntry(8, MetadataType.SLOT, newItemStack)
         ));
 
         for (PacketPlayer player : this.channels) {

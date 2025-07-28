@@ -1,31 +1,31 @@
 /**
- SentienceEntity API License v1.1
- Copyright (c) 2025 (t0bx)
-
- Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use, copy, modify, and integrate the Software into their own projects, including commercial and closed-source projects, subject to the following conditions:
-
- 1. Attribution:
- You must give appropriate credit to the original author ("Tobias Schuster" or "t0bx"), provide a link to the source or official page if available, and indicate if changes were made. You must do so in a reasonable and visible manner, such as in your plugin.yml, README, or about page.
-
- 2. No Redistribution or Resale:
- You may NOT sell, redistribute, or otherwise make the original Software or modified standalone versions of it available as a product (free or paid), plugin, or downloadable file, unless you have received prior written permission from the author. This includes publishing the plugin on any marketplace (e.g., SpigotMC, MC-Market, Polymart) or including it in paid bundles.
-
- 3. Use as Dependency/API:
- You are allowed to use this Software as a dependency or library in your own plugin or project, including in paid products, as long as attribution is given and the Software itself is not being sold or published separately.
-
- 4. No Misrepresentation:
- You may not misrepresent the origin of the Software. You must clearly distinguish your own modifications from the original work. The original author's name may not be removed from the source files or documentation.
-
- 5. License Retention:
- This license notice and all conditions must be preserved in all copies or substantial portions of the Software.
-
- 6. Disclaimer:
- THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
-
- ---
-
- Summary (non-binding):
- You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
+ * SentienceEntity API License v1.1
+ * Copyright (c) 2025 (t0bx)
+ * <p>
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use, copy, modify, and integrate the Software into their own projects, including commercial and closed-source projects, subject to the following conditions:
+ * <p>
+ * 1. Attribution:
+ * You must give appropriate credit to the original author ("Tobias Schuster" or "t0bx"), provide a link to the source or official page if available, and indicate if changes were made. You must do so in a reasonable and visible manner, such as in your plugin.yml, README, or about page.
+ * <p>
+ * 2. No Redistribution or Resale:
+ * You may NOT sell, redistribute, or otherwise make the original Software or modified standalone versions of it available as a product (free or paid), plugin, or downloadable file, unless you have received prior written permission from the author. This includes publishing the plugin on any marketplace (e.g., SpigotMC, MC-Market, Polymart) or including it in paid bundles.
+ * <p>
+ * 3. Use as Dependency/API:
+ * You are allowed to use this Software as a dependency or library in your own plugin or project, including in paid products, as long as attribution is given and the Software itself is not being sold or published separately.
+ * <p>
+ * 4. No Misrepresentation:
+ * You may not misrepresent the origin of the Software. You must clearly distinguish your own modifications from the original work. The original author's name may not be removed from the source files or documentation.
+ * <p>
+ * 5. License Retention:
+ * This license notice and all conditions must be preserved in all copies or substantial portions of the Software.
+ * <p>
+ * 6. Disclaimer:
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
+ * <p>
+ * ---
+ * <p>
+ * Summary (non-binding):
+ * You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
  */
 
 package de.t0bx.sentienceEntity.hologram;
@@ -140,7 +140,7 @@ public class HologramManager {
         SentienceHologram hologram = this.cachedHolograms.get(npcName);
         hologram.addLine(itemStack);
         if (persistent) {
-
+            saveLineToFile(npcName, itemStack);
         }
     }
 
@@ -170,12 +170,22 @@ public class HologramManager {
      * @param index the index of the line to update in the hologram
      * @param text the new text to set for the specified line
      */
-    public void updateLine(String npcName, int index, String text) {
+    public void updateLineText(String npcName, int index, String text) {
         if (!this.cachedHolograms.containsKey(npcName)) return;
 
         SentienceHologram hologram = this.cachedHolograms.get(npcName);
-        hologram.updateLine(index, text);
+        hologram.updateLineText(index, text);
+
         this.updateLineInFile(npcName, index, text);
+    }
+
+    public void updateLineItemStack(String npcName, int index, ItemStack itemStack) {
+        if (!this.cachedHolograms.containsKey(npcName)) return;
+
+        SentienceHologram hologram = this.cachedHolograms.get(npcName);
+        hologram.updateLineItemStack(index, itemStack);
+
+        this.updateLineInFile(npcName, index, itemStack);
     }
 
     /**
@@ -287,6 +297,36 @@ public class HologramManager {
         }
     }
 
+    private void saveLineToFile(String npcName, ItemStack itemStack) {
+        try {
+            this.jsonDocument = JsonDocument.loadDocument(this.file);
+
+            if (this.jsonDocument == null) {
+                this.jsonDocument = new JsonDocument();
+            }
+
+            JsonObject npcObject;
+            if (jsonDocument.hasKey(npcName)) {
+                npcObject = jsonDocument.get(npcName).getAsJsonObject();
+            } else {
+                npcObject = new JsonObject();
+                jsonDocument.set(npcName, npcObject);
+            }
+
+            int nextIndex = 0;
+            while (npcObject.has(String.valueOf(nextIndex))) {
+                nextIndex++;
+            }
+
+            npcObject.addProperty(String.valueOf(nextIndex), "ITEM_" + itemStack.getType().name().toUpperCase());
+
+            jsonDocument.save(this.file);
+        } catch (IOException e) {
+            SentienceEntity.getInstance().getLogger().severe("Failed to save hologram line: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void removeLineFromFile(String npcName, int index) {
         try {
             this.jsonDocument = JsonDocument.loadDocument(this.file);
@@ -336,6 +376,27 @@ public class HologramManager {
         }
     }
 
+    private void updateLineInFile(String npcName, int index, ItemStack itemStack) {
+        try {
+            this.jsonDocument = JsonDocument.loadDocument(this.file);
+
+            if (this.jsonDocument == null) return;
+
+            if (!this.jsonDocument.hasKey(npcName)) return;
+
+            JsonObject npcObject = this.jsonDocument.get(npcName).getAsJsonObject();
+
+            if (!npcObject.has(String.valueOf(index))) return;
+
+            npcObject.addProperty(String.valueOf(index), "ITEM_" + itemStack.getType().name().toUpperCase());
+
+            this.jsonDocument.save(this.file);
+        } catch (IOException e) {
+            SentienceEntity.getInstance().getLogger().severe("Failed to update hologram line: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void loadLinesFromFile(String npcName) {
         this.jsonDocument = JsonDocument.loadDocument(file);
 
@@ -356,7 +417,11 @@ public class HologramManager {
         int index = 0;
         while (npcObject.has(String.valueOf(index))) {
             String lineText = npcObject.get(String.valueOf(index)).getAsString();
-            hologram.addLine(lineText);
+            if (lineText.startsWith("ITEM_")) {
+                hologram.addLine(new ItemStack(Material.valueOf(lineText.substring(5))));
+            } else {
+                hologram.addLine(lineText);
+            }
             index++;
         }
 

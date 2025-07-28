@@ -31,11 +31,9 @@
 package de.t0bx.sentienceEntity.commands;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
-import de.t0bx.sentienceEntity.hologram.HologramLine;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.network.inventory.equipment.EquipmentSlot;
 import de.t0bx.sentienceEntity.npc.NpcsHandler;
-import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import de.t0bx.sentienceEntity.npc.setup.NpcCreation;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
@@ -49,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static de.t0bx.sentienceEntity.utils.MessageUtils.sendMessage;
 
@@ -59,7 +56,8 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
     private final String prefix;
     private final NpcCreation npcCreation;
     private final NpcsHandler npcsHandler;
-    private final HologramManager hologramManager;
+
+    private final List<Player> inspectList;
 
     private static final Set<String> VALID_TYPES = Set.of("mainhand", "offhand", "boots", "leggings", "chestplate", "helmet");
     private static final Map<String, String> REQUIRED_SUFFIX = Map.of(
@@ -74,7 +72,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
         this.prefix = sentienceEntity.getPrefix();
         this.npcCreation = sentienceEntity.getNpcCreation();
         this.npcsHandler = sentienceEntity.getNpcshandler();
-        this.hologramManager = sentienceEntity.getHologramManager();
+        this.inspectList = sentienceEntity.getInspectList();
     }
 
     @Override
@@ -131,84 +129,13 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
                 this.handleListNpcs(player);
             }
 
-            case "createhologram" -> {
-                if (args.length != 2) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se createHologram <Name> <dark_gray>| <gray>Create a Hologram for a npc"));
+            case "inspect" -> {
+                if (args.length != 1) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se inspect <dark_gray>| <gray>Enter Inspector Mode"));
                     return true;
                 }
 
-                String npcName = args[1];
-                this.handleCreateHologram(player, npcName);
-            }
-
-            case "addline" -> {
-                if (args.length <= 2) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se addLine <Name> <Text> <dark_gray>| <gray>Add a line for a hologram"));
-                    return true;
-                }
-
-                String npcName = args[1];
-                String text = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
-                this.handleAddLine(player, npcName, text);
-            }
-
-            case "additem" -> {
-                if (args.length != 2) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se addItem <Name> <dark_gray>| <gray>Add an item to the hologram"));
-                    return true;
-                }
-
-                ItemStack itemStack = player.getInventory().getItemInMainHand();
-                if (itemStack.getType() == Material.AIR) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "You need to hold an item in your hand!"));
-                    return true;
-                }
-
-                String npcName = args[1];
-                this.handleAddLine(player, npcName, itemStack);
-            }
-
-            case "setline" -> {
-                if (args.length <= 3) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se setLine <Name> <index> <Text> <dark_gray>| <gray>Updates a specific line from a hologram"));
-                    return true;
-                }
-
-                String npcName = args[1];
-                int index = Integer.parseInt(args[2]);
-                String text = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
-                this.handleSetLine(player, npcName, index, text);
-            }
-
-            case "lines" -> {
-                if (args.length != 2) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se lines <Name> <dark_gray>| <gray>List all lines from a hologram"));
-                    return true;
-                }
-
-                String npcName = args[1];
-                this.handleHologramLines(player, npcName);
-            }
-
-            case "removeline" -> {
-                if (args.length != 3) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se removeLine <Name> <index> <dark_gray>| <gray>Removes a specific line from a hologram"));
-                    return true;
-                }
-
-                String npcName = args[1];
-                int index = Integer.parseInt(args[2]);
-                this.handleRemoveLine(player, npcName, index);
-            }
-
-            case "removehologram" -> {
-                if (args.length != 2) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se removeHologram <Name> <dark_gray>| <gray>Removes a hologram"));
-                    return true;
-                }
-
-                String npcName = args[1];
-                this.handleRemoveHologram(player, npcName);
+                this.handleInspect(player);
             }
 
             default -> this.sendHelp(player);
@@ -383,122 +310,17 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
         });
     }
 
-    private void handleCreateHologram(Player player, String npcName) {
-        if (!this.npcsHandler.doesNPCExist(npcName)) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
+    private void handleInspect(Player player) {
+        if (this.inspectList.contains(player)) {
+            this.inspectList.remove(player);
+            sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>Inspector Mode disabled."));
             return;
         }
 
-        SentienceNPC npc = this.npcsHandler.getNPC(npcName);
-        this.hologramManager.createHologram(npcName, npc.getLocation());
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "You have created a hologram for the npc '" + npcName + "'."));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Use /se addLine to add a line to the hologram!"));
-    }
-
-    private void handleAddLine(Player player, String npcName, String text) {
-        if (!this.npcsHandler.doesNPCExist(npcName)) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
-            return;
-        }
-
-        if (this.hologramManager.getHologram(npcName) == null) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no hologram for the npc '" + npcName + "'! Use /se createHologram to create a hologram first!"));
-            return;
-        }
-
-        this.hologramManager.show(player, npcName);
-        this.hologramManager.addLine(npcName, text, true);
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "You have added a line to the hologram for the npc '" + npcName + "'."));
-    }
-
-    private void handleAddLine(Player player, String npcName, ItemStack itemStack) {
-        if (!this.npcsHandler.doesNPCExist(npcName)) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
-            return;
-        }
-
-        if (this.hologramManager.getHologram(npcName) == null) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no hologram for the npc '" + npcName + "'! Use /se createHologram to create a hologram first!"));
-            return;
-        }
-
-        this.hologramManager.show(player, npcName);
-        this.hologramManager.addLine(npcName, itemStack, true);
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "You have added a item to the hologram for the npc '" + npcName + "'."));
-    }
-
-    private void handleSetLine(Player player, String npcName, int index, String text) {
-        if (!this.npcsHandler.doesNPCExist(npcName)) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
-            return;
-        }
-
-        if (!this.hologramManager.doesLineExist(npcName, index)) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no line with the index '" + index + "'!"));
-            return;
-        }
-
-        this.hologramManager.updateLine(npcName, index, text);
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "You've changed the line '" + index + "' to '" + text + "'!"));
-
-    }
-
-    private void handleRemoveLine(Player player, String npcName, int index) {
-        if (!this.npcsHandler.doesNPCExist(npcName)) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
-            return;
-        }
-
-        if (!this.hologramManager.doesLineExist(npcName, index)) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no line with the index '" + index + "'!"));
-            return;
-        }
-
-        this.hologramManager.removeLine(npcName, index);
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "You've removed the line with the index '" + index + "'"));
-    }
-
-    private void handleHologramLines(Player player, String npcName) {
-        if (!this.npcsHandler.doesNPCExist(npcName)) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
-            return;
-        }
-
-        if (this.hologramManager.getHologram(npcName) == null) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no hologram for the npc '" + npcName + "'! Use /se createHologram to create a hologram first!"));
-            return;
-        }
-
-        Map<Integer, HologramLine> hologramLines = this.hologramManager.getHologramLines(npcName);
-        if (hologramLines.isEmpty()) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There are no HologramLines for the npc '" + npcName + "'!"));
-            return;
-        }
-
-        hologramLines.forEach((index, hologramline) -> {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Index: '" + index + "', Text: '" + hologramline.getText() + "'"));
-        });
-    }
-
-    private void handleRemoveHologram(Player player, String npcName) {
-        if (!this.npcsHandler.doesNPCExist(npcName)) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no npc with the name '" + npcName + "'!"));
-            return;
-        }
-
-        if (this.hologramManager.getHologram(npcName) == null) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There is no hologram for the npc '" + npcName + "'! Use /se createHologram to create a hologram first!"));
-            return;
-        }
-
-        Map<Integer, HologramLine> hologramLines = this.hologramManager.getHologramLines(npcName);
-        if (hologramLines.isEmpty()) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "There are no HologramLines for the npc '" + npcName + "'!"));
-            return;
-        }
-
-        this.hologramManager.removeHologram(npcName);
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "You've removed the hologram for the npc '" + npcName + "'!"));
+        this.inspectList.add(player);
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "<green>Inspector Mode enabled."));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Left-Click on a Npc to get information about the npc."));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Right-Click on a Npc to get information about the hologram."));
     }
 
     private void sendHelp(Player player) {
@@ -507,37 +329,20 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se editnpc <Name> <dark_gray>| <gray>Edit a npc"));
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se removenpc <Name> <dark_gray>| <gray>Removes a npc"));
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se listnpc <dark_gray>| <gray>List all npcs"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "NPC-Bound Holograms: "));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se createHologram <Name> <dark_gray>| <gray>Create a Hologram for a npc"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se addLine <Name> <Text> <dark_gray>| <gray>Add a line for a hologram"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se setLine <Name> <index> <Text> <dark_gray>| <gray>Updates a specific line from a hologram"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se lines <Name> <dark_gray>| <gray>List all lines from a hologram"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se removeLine <Name> <index> <dark_gray>| <gray>Removes a specific line from a hologram"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se removeHologram <Name> <dark_gray>| <gray>Removes a hologram"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se inspect <dark_gray>| <gray>Enter Inspector Mode"));
     }
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String @NotNull [] args) {
         if (args.length == 1) {
             return List.of(
-                    "spawnnpc", "editnpc", "listnpc", "removenpc", "createhologram",
-                    "addline", "setline", "lines", "removeLine", "removeHologram"
+                    "spawnnpc", "editnpc", "listnpc", "removenpc", "inspect"
             );
         }
 
         List<String> npcNames = this.npcsHandler.getNPCNames();
         switch (args[0].toLowerCase()) {
-            case "spawnnpc" -> {
-                if (args.length == 2) {
-                    return Collections.singletonList("<Name>");
-                }
-
-                if (args.length == 3) {
-                    return Collections.singletonList("<Player Name>");
-                }
-            }
-
-            case "removenpc", "createhologram", "removehologram", "lines" -> {
+            case "removenpc" -> {
                 return npcNames;
             }
 
@@ -552,44 +357,6 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
                         case "setitem", "removeitem" -> List.of("Mainhand", "Offhand", "Boots", "Leggings", "Chestplate", "Helmet");
                         default -> Collections.emptyList();
                     };
-                }
-            }
-
-            case "addline" -> {
-                if (args.length == 2) {
-                    return npcNames;
-                }
-
-                if (args.length == 3) {
-                    return Collections.singletonList("<Text>");
-                }
-            }
-
-            case "setline" -> {
-                if (args.length == 2) {
-                    return npcNames;
-                }
-
-                if (args.length == 3) {
-                    if (this.hologramManager.getHologramLines(args[1]) == null) return Collections.emptyList();
-
-                    return this.hologramManager.getHologramLines(args[1]).keySet().stream().map(String::valueOf).collect(Collectors.toList());
-                }
-
-                if (args.length == 4) {
-                    return Collections.singletonList("<Text>");
-                }
-            }
-
-            case "removeline" -> {
-                if (args.length == 2) {
-                    return npcNames;
-                }
-
-                if (args.length == 3) {
-                    if (this.hologramManager.getHologramLines(args[1]) == null) return Collections.emptyList();
-
-                    return this.hologramManager.getHologramLines(args[1]).keySet().stream().map(String::valueOf).collect(Collectors.toList());
                 }
             }
         }

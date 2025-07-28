@@ -22,9 +22,11 @@ public class InventoryCloseListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         Player player = (Player) event.getPlayer();
 
-        if (this.npcCreation.isNpcCreation(player)) {
-            this.npcCreation.removeCreationBuilder(player);
-            sendMessage(player, MiniMessage.miniMessage().deserialize(SentienceEntity.getInstance().getPrefix() + "<red>Cancelled the npc creation"));
+        if (event.getReason() == InventoryCloseEvent.Reason.PLAYER) {
+            if (this.npcCreation.isNpcCreation(player)) {
+                this.npcCreation.removeCreationBuilder(player);
+                sendMessage(player, MiniMessage.miniMessage().deserialize(SentienceEntity.getInstance().getPrefix() + "<red>Cancelled the npc creation"));
+            }
         }
     }
 }

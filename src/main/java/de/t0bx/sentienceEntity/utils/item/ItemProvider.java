@@ -1,4 +1,4 @@
-package de.t0bx.sentienceEntity.utils;
+package de.t0bx.sentienceEntity.utils.item;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
 import lombok.Getter;
