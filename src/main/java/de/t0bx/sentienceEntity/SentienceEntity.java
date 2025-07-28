@@ -31,6 +31,7 @@
 package de.t0bx.sentienceEntity;
 
 import de.t0bx.sentienceEntity.commands.SentienceEntityCommand;
+import de.t0bx.sentienceEntity.commands.SentienceHologramCommand;
 import de.t0bx.sentienceEntity.commands.SentiencePathCommand;
 import de.t0bx.sentienceEntity.config.ConfigFileManager;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
@@ -51,9 +52,14 @@ import lombok.Setter;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Team;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 public final class SentienceEntity extends JavaPlugin {
@@ -86,6 +92,8 @@ public final class SentienceEntity extends JavaPlugin {
     private static SentienceAPI api;
 
     private BukkitAudiences audiences;
+
+    private final List<Player> inspectList = new ArrayList<>();
 
     @Override
     public void onLoad() {
@@ -123,7 +131,7 @@ public final class SentienceEntity extends JavaPlugin {
 
                getLogger().info("Loaded Registries.");
            } catch (Exception exception) {
-               getLogger().warning("Failed to load ItemIdRegistry.");
+               getLogger().warning("Failed to load Registries.");
                exception.printStackTrace();
                getLogger().warning("Disabling plugin...");
                Bukkit.getPluginManager().disablePlugin(this);
@@ -154,9 +162,11 @@ public final class SentienceEntity extends JavaPlugin {
         pluginManager.registerEvents(new AsyncPlayerChatListener(this.npcCreation, this.npcshandler), this);
         pluginManager.registerEvents(new InventoryClickListener(this.npcCreation, this.npcshandler), this);
         pluginManager.registerEvents(new InventoryCloseListener(this.npcCreation), this);
+        pluginManager.registerEvents(new PlayerClickNpcListener(this), this);
 
         this.getCommand("se").setExecutor(new SentienceEntityCommand(this));
         this.getCommand("sp").setExecutor(new SentiencePathCommand(this));
+        this.getCommand("sh").setExecutor(new SentienceHologramCommand(this));
 
         api = new SentienceAPI();
         this.getLogger().info("SentienceEntity has been enabled!");

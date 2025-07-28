@@ -469,7 +469,7 @@ public class SentienceNPC {
     }
 
     @Data
-    private static class EquipmentData {
+    public static class EquipmentData {
         private final List<Equipment> equipment = new ArrayList<>();
     }
 }

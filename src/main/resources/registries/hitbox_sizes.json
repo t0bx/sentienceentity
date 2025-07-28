@@ -211,16 +211,20 @@
             "width": 4.0
         }
     },
+    "happy_ghast": {
+        "single": {
+            "height": 4.0,
+            "width": 4.0
+        }
+    },
     "glow_squid": {
-        "height": 0.8,
-        "width": 0.8,
-        "baby": {
-            "height": 0.475,
-            "width": 0.475
-        },
         "adult": {
-            "height": 0.95,
-            "width": 0.95
+            "height": 0.8,
+            "width": 0.8
+        },
+        "baby": {
+            "height": 0.4,
+            "width": 0.4
         }
     },
     "goat": {

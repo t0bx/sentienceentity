@@ -1,6 +1,6 @@
 package de.t0bx.sentienceEntity.inventory;
 
-import de.t0bx.sentienceEntity.utils.ItemProvider;
+import de.t0bx.sentienceEntity.utils.item.ItemProvider;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;

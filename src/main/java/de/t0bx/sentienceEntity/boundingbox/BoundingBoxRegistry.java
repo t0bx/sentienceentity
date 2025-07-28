@@ -30,8 +30,7 @@ public class BoundingBoxRegistry {
             EntityType type;
             try {
                 type = EntityType.valueOf(entityName.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                System.err.println("Unknown EntityType: " + entityName);
+            } catch (IllegalArgumentException ignored) {
                 continue;
             }
 
@@ -40,15 +39,12 @@ public class BoundingBoxRegistry {
             if (variantsObj.has("single")) {
                 JsonObject boxObj = variantsObj.getAsJsonObject("single");
                 box = parseBoundingBox(boxObj);
-            }
-            else if (variantsObj.has("adult")) {
+            } else if (variantsObj.has("adult")) {
                 JsonObject boxObj = variantsObj.getAsJsonObject("adult");
                 box = parseBoundingBox(boxObj);
             }
 
-            if (box != null) {
-                boundingBoxes.put(type, box);
-            }
+            if (box != null) boundingBoxes.put(type, box);
         }
     }
 
