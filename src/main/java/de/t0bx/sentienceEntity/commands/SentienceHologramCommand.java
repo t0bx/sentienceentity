@@ -64,7 +64,7 @@ public class SentienceHologramCommand implements CommandExecutor, TabCompleter {
         switch (args[0].toLowerCase()) {
             case "createhologram" -> {
                 if (args.length != 2) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se createHologram <Name> <dark_gray>| <gray>Create a Hologram for a npc"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh createHologram <Name> <dark_gray>| <gray>Create a Hologram for a npc"));
                     return true;
                 }
 
@@ -74,7 +74,7 @@ public class SentienceHologramCommand implements CommandExecutor, TabCompleter {
 
             case "addtextline" -> {
                 if (args.length <= 2) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se addTextLine <Name> <Text> <dark_gray>| <gray>Add a Text line for a hologram"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh addTextLine <Name> <Text> <dark_gray>| <gray>Add a Text line for a hologram"));
                     return true;
                 }
 
@@ -85,7 +85,7 @@ public class SentienceHologramCommand implements CommandExecutor, TabCompleter {
 
             case "additemline" -> {
                 if (args.length != 2) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se addItemLine <Name> <dark_gray>| <gray>Add a Item line for a hologram"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh addItemLine <Name> <dark_gray>| <gray>Add a Item line for a hologram"));
                     return true;
                 }
 
@@ -101,7 +101,7 @@ public class SentienceHologramCommand implements CommandExecutor, TabCompleter {
 
             case "settextline" -> {
                 if (args.length <= 3) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se setLine <Name> <index> <Text> <dark_gray>| <gray>Updates a specific Text line from a hologram"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh setLine <Name> <index> <Text> <dark_gray>| <gray>Updates a specific Text line from a hologram"));
                     return true;
                 }
 
@@ -121,7 +121,7 @@ public class SentienceHologramCommand implements CommandExecutor, TabCompleter {
 
             case "setitemline" -> {
                 if (args.length != 3) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se setItemLine <Name> <index> <dark_gray>| <gray>Updates a specific Item line from a hologram"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh setItemLine <Name> <index> <dark_gray>| <gray>Updates a specific Item line from a hologram"));
                     return true;
                 }
 
@@ -146,7 +146,7 @@ public class SentienceHologramCommand implements CommandExecutor, TabCompleter {
 
             case "lines" -> {
                 if (args.length != 2) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se lines <Name> <dark_gray>| <gray>List all lines from a hologram"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh lines <Name> <dark_gray>| <gray>List all lines from a hologram"));
                     return true;
                 }
 
@@ -156,7 +156,7 @@ public class SentienceHologramCommand implements CommandExecutor, TabCompleter {
 
             case "removeline" -> {
                 if (args.length != 3) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se removeLine <Name> <index> <dark_gray>| <gray>Removes a specific line from a hologram"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh removeLine <Name> <index> <dark_gray>| <gray>Removes a specific line from a hologram"));
                     return true;
                 }
 
@@ -167,7 +167,7 @@ public class SentienceHologramCommand implements CommandExecutor, TabCompleter {
 
             case "removehologram" -> {
                 if (args.length != 2) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se removeHologram <Name> <dark_gray>| <gray>Removes a hologram"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh removeHologram <Name> <dark_gray>| <gray>Removes a hologram"));
                     return true;
                 }
 
@@ -319,14 +319,14 @@ public class SentienceHologramCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(Player player) {
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se createHologram <Name> <dark_gray>| <gray>Create a Hologram for a npc"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se addTextLine <Name> <Text> <dark_gray>| <gray>Add a Text line for a hologram"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se addItemLine <Name> <dark_gray>| <gray>Add a Item line for a hologram"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se setTextLine <Name> <index> <Text> <dark_gray>| <gray>Updates a specific Text line from a hologram"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se setItemLine <Name> <index> <dark_gray>| <gray>Updates a specific Item line from a hologram"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se lines <Name> <dark_gray>| <gray>List all lines from a hologram"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se removeLine <Name> <index> <dark_gray>| <gray>Removes a specific line from a hologram"));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se removeHologram <Name> <dark_gray>| <gray>Removes a hologram"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh createHologram <Name> <dark_gray>| <gray>Create a Hologram for a npc"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh addTextLine <Name> <Text> <dark_gray>| <gray>Add a Text line for a hologram"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh addItemLine <Name> <dark_gray>| <gray>Add a Item line for a hologram"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh setTextLine <Name> <index> <Text> <dark_gray>| <gray>Updates a specific Text line from a hologram"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh setItemLine <Name> <index> <dark_gray>| <gray>Updates a specific Item line from a hologram"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh lines <Name> <dark_gray>| <gray>List all lines from a hologram"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh removeLine <Name> <index> <dark_gray>| <gray>Removes a specific line from a hologram"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /sh removeHologram <Name> <dark_gray>| <gray>Removes a hologram"));
     }
 
     @Override

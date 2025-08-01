@@ -327,26 +327,14 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
         return result;
     }
 
-    /**
-     * Finds a simple path between a start and goal location within a specified world.
-     * This method uses a breadth-first search to explore neighboring nodes
-     * and determine a traversable path from the start to the goal.
-     *
-     * @param start the starting location of the path
-     * @param goal  the goal location of the path
-     * @param world the world in which the pathfinding is being conducted
-     * @return a list of locations representing the path from start to goal,
-     * or an empty list if no path is found
-     */
     public List<Location> findSimplePath(Location start, Location goal, World world) {
-        Queue<Node> queue = new LinkedList<>();
         Set<Node> visited = new HashSet<>();
-
         Node startNode = new Node(start.getBlockX(), start.getBlockY(), start.getBlockZ());
         Node goalNode = new Node(goal.getBlockX(), goal.getBlockY(), goal.getBlockZ());
 
+        PriorityQueue<Node> queue = new PriorityQueue<>(Comparator.comparingDouble(n -> n.distanceTo(goalNode)));
+
         queue.add(startNode);
-        visited.add(startNode);
 
         while (!queue.isEmpty()) {
             Node current = queue.poll();
@@ -355,10 +343,12 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
                 return reconstructPath(current, world);
             }
 
+            if (visited.contains(current)) continue;
+            visited.add(current);
+
             for (Node neighbor : generateNeighbors(current, world)) {
                 if (!visited.contains(neighbor)) {
                     neighbor.parent = current;
-                    visited.add(neighbor);
                     queue.add(neighbor);
                 }
             }
@@ -366,6 +356,8 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
 
         return Collections.emptyList();
     }
+
+
 
     /**
      * Reconstructs the path from an end node by tracing its parent nodes
