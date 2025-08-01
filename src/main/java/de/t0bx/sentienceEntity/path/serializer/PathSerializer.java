@@ -45,6 +45,7 @@ public class PathSerializer {
         try {
             Files.setAttribute(pathFile, "dos:hidden", true);
         } catch (UnsupportedOperationException ignored) {
+
         }
     }
 

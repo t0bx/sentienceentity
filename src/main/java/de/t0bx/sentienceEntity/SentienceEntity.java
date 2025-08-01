@@ -52,7 +52,7 @@ import lombok.Setter;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Entity;
+
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -60,6 +60,7 @@ import org.bukkit.scoreboard.Team;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 @Getter
 public final class SentienceEntity extends JavaPlugin {
@@ -131,11 +132,9 @@ public final class SentienceEntity extends JavaPlugin {
 
                getLogger().info("Loaded Registries.");
            } catch (Exception exception) {
-               getLogger().warning("Failed to load Registries.");
-               exception.printStackTrace();
+               getLogger().log(Level.SEVERE, "Error while loading Registries!", exception);
                getLogger().warning("Disabling plugin...");
                Bukkit.getPluginManager().disablePlugin(this);
-               return;
            }
         });
 
