@@ -32,37 +32,51 @@ package de.t0bx.sentienceEntity.npc;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.network.PacketPlayer;
+import de.t0bx.sentienceEntity.network.inventory.equipment.Equipment;
+import de.t0bx.sentienceEntity.network.inventory.equipment.EquipmentSlot;
 import de.t0bx.sentienceEntity.network.metadata.MetadataEntry;
 import de.t0bx.sentienceEntity.network.metadata.MetadataType;
 import de.t0bx.sentienceEntity.network.utils.*;
 import de.t0bx.sentienceEntity.network.wrapper.packets.*;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
+import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.*;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BoundingBox;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.lang.reflect.Method;
+import java.util.*;
 
 @Getter
+@Setter
 public class SentienceNPC {
+
+    private final String name;
 
     private final int entityId;
 
+    private final EntityType entityType;
+
     private final NpcProfile profile;
 
-    @Setter
     private Location location;
 
-    @Setter
     private boolean shouldLookAtPlayer;
 
-    @Setter
     private boolean shouldSneakWithPlayer;
 
     private final Set<PacketPlayer> channels = new HashSet<>();
+
+    private final EquipmentData equipmentData;
+
+    private String permission;
+
+    private String boundedPathName;
 
     /**
      * Constructs a new instance of SentienceNPC with the specified entity ID and NPC profile.
@@ -70,9 +84,12 @@ public class SentienceNPC {
      * @param entityId the unique identifier for the NPC entity
      * @param profile the profile containing the NPC's properties such as name, UUID, and skin information
      */
-    public SentienceNPC(int entityId, NpcProfile profile) {
+    public SentienceNPC(String name, int entityId, EntityType entityType, NpcProfile profile) {
+        this.name = name;
         this.entityId = entityId;
+        this.entityType = entityType;
         this.profile = profile;
+        this.equipmentData = new EquipmentData();
     }
 
     /**
@@ -85,32 +102,36 @@ public class SentienceNPC {
     public void spawn(Player player) {
         PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
 
+        if (this.getPermission() != null && !player.hasPermission(this.getPermission())) return;
+
         if (this.hasSpawned(packetPlayer)) return;
         if (this.getLocation() == null) return;
 
         if (!this.getLocation().getWorld().getName().equalsIgnoreCase(player.getWorld().getName())) return;
 
-        List<PacketPlayerInfoUpdate.Action> actions = List.of(
-                PacketPlayerInfoUpdate.Action.ADD_PLAYER
-        );
-        List<PacketPlayerInfoUpdate.PlayerEntry> entries = List.of(
-                new PacketPlayerInfoUpdate.PlayerEntry(
-                        profile.getUuid(),
-                        profile.getName(),
-                        profile.getProperties(),
-                        0,
-                        false
-                )
-        );
+        if (entityType == EntityType.PLAYER) {
+            List<PacketPlayerInfoUpdate.Action> actions = List.of(
+                    PacketPlayerInfoUpdate.Action.ADD_PLAYER
+            );
+            List<PacketPlayerInfoUpdate.PlayerEntry> entries = List.of(
+                    new PacketPlayerInfoUpdate.PlayerEntry(
+                            profile.getUuid(),
+                            profile.getName(),
+                            profile.getProperties(),
+                            0,
+                            false
+                    )
+            );
 
-        var infoUpdatePacket = new PacketPlayerInfoUpdate(actions, entries);
+            var infoUpdatePacket = new PacketPlayerInfoUpdate(actions, entries);
 
-        packetPlayer.sendPacket(infoUpdatePacket);
+            packetPlayer.sendPacket(infoUpdatePacket);
+        }
 
         var addEntityPacket = new PacketSpawnEntity(
                 entityId,
                 profile.getUuid(),
-                EntityType.PLAYER,
+                entityType,
                 location,
                 location.getYaw(),
                 0,
@@ -121,28 +142,39 @@ public class SentienceNPC {
 
         packetPlayer.sendPacket(addEntityPacket);
 
-        List<MetadataEntry> metadataEntries = List.of(
-                new MetadataEntry(17, MetadataType.BYTE, (byte) 127)
-        );
+        List<MetadataEntry> metadataEntries = new ArrayList<>();
+        metadataEntries.add(new MetadataEntry(4, MetadataType.BOOLEAN, true)); //Is silent
+
+        if (entityType == EntityType.PLAYER) {
+            metadataEntries.add(new MetadataEntry(17, MetadataType.BYTE, (byte) 127)); //Show all skin parts
+        }
+
+        Class<?> entityClass = entityType.getEntityClass();
+        if (entityClass != null && Mob.class.isAssignableFrom(entityClass)) {
+            metadataEntries.add(new MetadataEntry(15, MetadataType.BYTE, (byte) 0x01)); // NoAI prevents Npc to "glitch"
+        }
 
         var metadataPacket = new PacketSetEntityMetadata(entityId, metadataEntries);
 
         packetPlayer.sendPacket(metadataPacket);
 
-        String name = "hidden_" + entityId;
-        var teamPlayerAddPacket = new PacketSetPlayerTeam(
-                name,
-                TeamMethods.CREATE_TEAM,
-                (byte) 0x01,
-                "never",
-                "never",
-                0,
-                List.of(profile.getName())
-        );
+        if (entityType == EntityType.PLAYER) {
+            String name = "hidden_" + entityId;
+            var teamPlayerAddPacket = new PacketSetPlayerTeam(
+                    name,
+                    TeamMethods.CREATE_TEAM,
+                    (byte) 0x01,
+                    "never",
+                    "never",
+                    0,
+                    List.of(profile.getName())
+            );
 
-        packetPlayer.sendPacket(teamPlayerAddPacket);
+            packetPlayer.sendPacket(teamPlayerAddPacket);
+        }
 
         this.channels.add(packetPlayer);
+        this.showEquipment(player);
     }
 
     /**
@@ -193,6 +225,45 @@ public class SentienceNPC {
 
         var metadataPacket = new PacketSetEntityMetadata(this.getEntityId(), Collections.singletonList(entry));
         packetPlayer.sendPacket(metadataPacket);
+    }
+
+    public void addEquipment(EquipmentSlot slot, ItemStack item) {
+        this.equipmentData.getEquipment().add(new Equipment(slot, item));
+
+        var equipmentPacket = new PacketSetEquipment(
+                this.entityId,
+                this.getEquipmentData().getEquipment()
+        );
+
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(equipmentPacket);
+        }
+    }
+
+    public void removeEquipment(EquipmentSlot slot) {
+        this.equipmentData.getEquipment().removeIf(e -> e.getSlot().getId() == slot.getId());
+
+        var equipmentPacket = new PacketSetEquipment(
+                this.entityId,
+                List.of(new Equipment(slot, new ItemStack(Material.AIR)))
+        );
+
+        for (PacketPlayer player : this.channels) {
+            player.sendPacket(equipmentPacket);
+        }
+    }
+
+    public void showEquipment(Player player) {
+        PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
+        if (!this.hasSpawned(packetPlayer)) return;
+        if (this.equipmentData.getEquipment().isEmpty()) return;
+
+        var equipmentPacket = new PacketSetEquipment(
+                entityId,
+                equipmentData.getEquipment()
+        );
+
+        packetPlayer.sendPacket(equipmentPacket);
     }
 
     /**
@@ -305,6 +376,9 @@ public class SentienceNPC {
      *                      authenticity of the skin data.
      */
     public void changeSkin(String skinValue, String skinSignature) {
+        if (entityType != EntityType.PLAYER)
+            throw new IllegalStateException("Cannot change skin of non-player NPC");
+
         var removePacket = new PacketPlayerInfoRemove(Collections.singletonList(this.getProfile().getUuid()));
         for (PacketPlayer player : this.channels) {
             player.sendPacket(removePacket);
@@ -397,5 +471,10 @@ public class SentienceNPC {
         yaw %= 360;
         if (yaw < 0) yaw += 360;
         return yaw;
+    }
+
+    @Data
+    public static class EquipmentData {
+        private final List<Equipment> equipment = new ArrayList<>();
     }
 }

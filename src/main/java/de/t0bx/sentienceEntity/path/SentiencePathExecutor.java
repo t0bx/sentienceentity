@@ -7,6 +7,7 @@ import de.t0bx.sentienceEntity.network.wrapper.packets.PacketTeleportEntity;
 import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import de.t0bx.sentienceEntity.path.data.Node;
 import de.t0bx.sentienceEntity.path.data.SentiencePath;
+import de.t0bx.sentienceEntity.path.data.SentiencePathType;
 import de.t0bx.sentienceEntity.path.data.SentiencePointPath;
 import de.t0bx.sentienceEntity.path.serializer.PathSerializer;
 import org.bukkit.Location;
@@ -66,7 +67,7 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
                 })
                 .thenAccept(locationsPath -> {
                     if (locationsPath != null) {
-                        startPath(locationsPath);
+                        startPath(locationsPath, path.getType() == SentiencePathType.LOOP);
                     } else {
                         SentienceEntity.getInstance().getLogger().warning("Loaded path was null for " + path.getName());
                     }
@@ -84,7 +85,7 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
      *
      * @param paths a list of {@code Location} objects representing the waypoints the NPC should traverse
      */
-    private void startPath(List<Location> paths) {
+    private void startPath(List<Location> paths, boolean loop) {
         String npcName = SentienceEntity.getInstance().getNpcshandler().getNpcNameFromId(entityId);
         SentienceNPC npc = SentienceEntity.getInstance().getNpcshandler().getNPC(npcName);
 
@@ -93,7 +94,7 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
 
             @Override
             public void run() {
-                if (index >= paths.size() - 1) {
+                if (!loop && index >= paths.size() - 1) {
                     cancel();
                     for (var players : npc.getChannels()) {
                         players.sendMultiplePackets(
@@ -105,7 +106,11 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
                 }
 
                 Location current = paths.get(index);
-                Location next = paths.get(index + 1);
+                Location next = (index + 1 < paths.size()) ? paths.get(index + 1) : (loop ? paths.get(0) : null);
+                if (next == null) {
+                    cancel();
+                    return;
+                }
 
                 float yaw = calculateYaw(current, next);
                 float pitch = calculatePitch(current, next);
@@ -124,6 +129,9 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
                     }
 
                     index++;
+                    if (loop) {
+                        index = index % paths.size();
+                    }
                     return;
                 }
 
@@ -134,6 +142,9 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
                     );
                 }
                 index++;
+                if (loop) {
+                    index = index % paths.size();
+                }
             }
         }.runTaskTimer(SentienceEntity.getInstance(), 0L, 2L);
     }
@@ -282,6 +293,40 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
             allPoints.addAll(interpolatedSegment);
         }
 
+        if (path.getType() == SentiencePathType.LOOP) {
+            int lastIndex = sortedKeys.get(sortedKeys.size() - 1);
+            int firstIndex = sortedKeys.get(0);
+
+            SentiencePointPath lastPath = paths.get(lastIndex);
+            SentiencePointPath firstPath = paths.get(firstIndex);
+
+            List<Location> loopSegment = findSimplePath(
+                    lastPath.getLocation(),
+                    firstPath.getLocation(),
+                    lastPath.getLocation().getWorld()
+            );
+
+            List<Location> interpolatedLoop = new ArrayList<>();
+            for (int j = 0; j < loopSegment.size() - 1; j++) {
+                Location from = loopSegment.get(j);
+                Location to = loopSegment.get(j + 1);
+
+                List<Location> steps = interpolateLinearPath(from, to, 0.5);
+
+                if (!interpolatedLoop.isEmpty()) {
+                    steps.remove(0);
+                }
+
+                interpolatedLoop.addAll(steps);
+            }
+
+            if (!allPoints.isEmpty() && !interpolatedLoop.isEmpty()) {
+                interpolatedLoop.remove(0);
+            }
+
+            allPoints.addAll(interpolatedLoop);
+        }
+
         return allPoints;
     }
 
@@ -327,26 +372,14 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
         return result;
     }
 
-    /**
-     * Finds a simple path between a start and goal location within a specified world.
-     * This method uses a breadth-first search to explore neighboring nodes
-     * and determine a traversable path from the start to the goal.
-     *
-     * @param start the starting location of the path
-     * @param goal  the goal location of the path
-     * @param world the world in which the pathfinding is being conducted
-     * @return a list of locations representing the path from start to goal,
-     * or an empty list if no path is found
-     */
     public List<Location> findSimplePath(Location start, Location goal, World world) {
-        Queue<Node> queue = new LinkedList<>();
         Set<Node> visited = new HashSet<>();
-
         Node startNode = new Node(start.getBlockX(), start.getBlockY(), start.getBlockZ());
         Node goalNode = new Node(goal.getBlockX(), goal.getBlockY(), goal.getBlockZ());
 
+        PriorityQueue<Node> queue = new PriorityQueue<>(Comparator.comparingDouble(n -> n.distanceTo(goalNode)));
+
         queue.add(startNode);
-        visited.add(startNode);
 
         while (!queue.isEmpty()) {
             Node current = queue.poll();
@@ -355,10 +388,12 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
                 return reconstructPath(current, world);
             }
 
+            if (visited.contains(current)) continue;
+            visited.add(current);
+
             for (Node neighbor : generateNeighbors(current, world)) {
                 if (!visited.contains(neighbor)) {
                     neighbor.parent = current;
-                    visited.add(neighbor);
                     queue.add(neighbor);
                 }
             }
@@ -366,6 +401,8 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
 
         return Collections.emptyList();
     }
+
+
 
     /**
      * Reconstructs the path from an end node by tracing its parent nodes

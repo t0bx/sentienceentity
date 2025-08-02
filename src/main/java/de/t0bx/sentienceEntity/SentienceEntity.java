@@ -31,19 +31,22 @@
 package de.t0bx.sentienceEntity;
 
 import de.t0bx.sentienceEntity.commands.SentienceEntityCommand;
+import de.t0bx.sentienceEntity.commands.SentienceHologramCommand;
 import de.t0bx.sentienceEntity.commands.SentiencePathCommand;
 import de.t0bx.sentienceEntity.config.ConfigFileManager;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
-import de.t0bx.sentienceEntity.listener.NpcSpawnListener;
-import de.t0bx.sentienceEntity.listener.PlayerMoveListener;
-import de.t0bx.sentienceEntity.listener.PlayerToggleSneakListener;
+import de.t0bx.sentienceEntity.inventory.InventoryProvider;
+import de.t0bx.sentienceEntity.listener.*;
 import de.t0bx.sentienceEntity.network.PacketController;
 import de.t0bx.sentienceEntity.network.channel.ChannelAccess;
 import de.t0bx.sentienceEntity.network.channel.PaperChannelAccess;
 import de.t0bx.sentienceEntity.network.channel.SpigotChannelAccess;
 import de.t0bx.sentienceEntity.network.handler.PacketReceiveHandler;
 import de.t0bx.sentienceEntity.npc.NpcsHandler;
+import de.t0bx.sentienceEntity.npc.SentienceNPC;
+import de.t0bx.sentienceEntity.npc.setup.NpcCreation;
 import de.t0bx.sentienceEntity.path.SentiencePathHandler;
+import de.t0bx.sentienceEntity.path.data.SentiencePathType;
 import de.t0bx.sentienceEntity.update.UpdateManager;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
 import lombok.Getter;
@@ -51,8 +54,15 @@ import lombok.Setter;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
+
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Team;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
 
 @Getter
 public final class SentienceEntity extends JavaPlugin {
@@ -74,6 +84,8 @@ public final class SentienceEntity extends JavaPlugin {
 
     private SkinFetcher skinFetcher;
     private PacketController packetController;
+    private InventoryProvider inventoryProvider;
+    private NpcCreation npcCreation;
     private NpcsHandler npcshandler;
     private HologramManager hologramManager;
     private SentiencePathHandler sentiencePathHandler;
@@ -83,6 +95,8 @@ public final class SentienceEntity extends JavaPlugin {
     private static SentienceAPI api;
 
     private BukkitAudiences audiences;
+
+    private final List<Player> inspectList = new ArrayList<>();
 
     @Override
     public void onLoad() {
@@ -112,6 +126,20 @@ public final class SentienceEntity extends JavaPlugin {
 
         if (!isPAPER()) this.audiences = BukkitAudiences.create(this);
 
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+           try {
+               Class.forName("de.t0bx.sentienceEntity.network.version.registries.ItemIdRegistry");
+               Class.forName("de.t0bx.sentienceEntity.network.version.registries.EntityTypeRegistry");
+               Class.forName("de.t0bx.sentienceEntity.boundingbox.BoundingBoxRegistry");
+
+               getLogger().info("Loaded Registries.");
+           } catch (Exception exception) {
+               getLogger().log(Level.SEVERE, "Error while loading Registries!", exception);
+               getLogger().warning("Disabling plugin...");
+               Bukkit.getPluginManager().disablePlugin(this);
+           }
+        });
+
         this.updateManager = new UpdateManager(this);
         this.updateManager.checkForUpdate();
 
@@ -119,21 +147,38 @@ public final class SentienceEntity extends JavaPlugin {
 
         this.packetController = new PacketController();
 
+        this.inventoryProvider = new InventoryProvider();
+        this.npcCreation = new NpcCreation(this.inventoryProvider);
         this.npcshandler = new NpcsHandler();
         this.hologramManager = new HologramManager();
-        //this.sentiencePathHandler = new SentiencePathHandler();
+        this.sentiencePathHandler = new SentiencePathHandler();
 
         this.packetReceiveHandler = new PacketReceiveHandler(this.npcshandler, this.packetController);
         this.getLogger().info("Loaded " + this.npcshandler.getLoadedSize() + " NPCs.");
 
-        Bukkit.getPluginManager().registerEvents(new NpcSpawnListener(), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerMoveListener(), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerToggleSneakListener(), this);
+        final PluginManager pluginManager = Bukkit.getPluginManager();
+        pluginManager.registerEvents(new NpcSpawnListener(), this);
+        pluginManager.registerEvents(new PlayerMoveListener(), this);
+        pluginManager.registerEvents(new PlayerToggleSneakListener(), this);
+        pluginManager.registerEvents(new AsyncPlayerChatListener(this.npcCreation, this.npcshandler), this);
+        pluginManager.registerEvents(new InventoryClickListener(this.npcCreation, this.npcshandler), this);
+        pluginManager.registerEvents(new InventoryCloseListener(this.npcCreation), this);
+        pluginManager.registerEvents(new PlayerClickNpcListener(this), this);
+
         this.getCommand("se").setExecutor(new SentienceEntityCommand(this));
-        //this.getCommand("sp").setExecutor(new SentiencePathCommand(this));
+        this.getCommand("sp").setExecutor(new SentiencePathCommand(this));
+        this.getCommand("sh").setExecutor(new SentienceHologramCommand(this));
 
         api = new SentienceAPI();
         this.getLogger().info("SentienceEntity has been enabled!");
+
+        for (SentienceNPC npc : npcshandler.getAllNPCs()) {
+            String pathName = npc.getBoundedPathName();
+            if (pathName == null) continue;
+            if (sentiencePathHandler.getPath(pathName).getType() != SentiencePathType.LOOP) continue;
+
+            sentiencePathHandler.applyPath(npc.getEntityId(), pathName);
+        }
     }
 
     @Override

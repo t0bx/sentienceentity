@@ -30,26 +30,24 @@
 
 package de.t0bx.sentienceEntity.hologram;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.UUID;
 
-@Getter
+@Data
 public class HologramLine {
     private final int entityId;
     private final UUID hologramUUID;
-
-    @Setter
     private String text;
-    @Setter
     private Location location;
+    private ItemStack itemStack;
 
-    public HologramLine(int entityId, UUID hologramUUID, String text, Location location) {
+    public HologramLine(int entityId, UUID hologramUUID) {
         this.entityId = entityId;
         this.hologramUUID = hologramUUID;
-        this.text = text;
-        this.location = location;
     }
 }

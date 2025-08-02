@@ -88,6 +88,7 @@ public class PacketSetEntityMetadata implements PacketWrapper {
                 case VAR_INT, POSE -> MetadataType.VAR_INT.write(buf, entry.value);
                 case FLOAT -> MetadataType.FLOAT.write(buf, entry.value);
                 case STRING -> MetadataType.STRING.write(buf, entry.value);
+                case SLOT -> MetadataType.SLOT.write(buf, entry.value);
                 case BOOLEAN -> MetadataType.BOOLEAN.write(buf, entry.value);
                 case OPTIONAL_TEXT_COMPONENT -> MetadataType.OPTIONAL_TEXT_COMPONENT.write(buf, entry.value);
                 default -> throw new UnsupportedOperationException("Unsupported metadata type: " + entry.type);

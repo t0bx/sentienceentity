@@ -33,6 +33,7 @@ package de.t0bx.sentienceEntity.network.metadata;
 import de.t0bx.sentienceEntity.network.utils.PacketUtils;
 import io.netty.buffer.ByteBuf;
 import net.kyori.adventure.text.Component;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -42,6 +43,7 @@ public enum MetadataType {
     VAR_INT(1, (buf, val) -> PacketUtils.writeVarInt(buf, (Integer) val)),
     FLOAT(3, (buf, val) -> buf.writeFloat((Float) val)),
     STRING(4, (buf, val) -> PacketUtils.writeString(buf, (String) val)),
+    SLOT(7, ((buf, val) -> PacketUtils.writeItemStack(buf, (ItemStack) val))),
     BOOLEAN(8, (buf, val) -> buf.writeBoolean((Boolean) val)),
     @SuppressWarnings("unchecked")
     OPTIONAL_TEXT_COMPONENT(6, ((buf, val) -> PacketUtils.writeOptionalComponent(buf, (Optional<Component>) val))),

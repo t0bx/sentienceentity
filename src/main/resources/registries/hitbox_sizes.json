@@ -1,0 +1,648 @@
+{
+    "player": {
+        "single": {
+            "height": 1.8,
+            "width": 0.6
+        }
+    },
+    "allay": {
+        "single": {
+            "height": 0.6,
+            "width": 0.35
+        }
+    },
+    "armadillo": {
+        "adult": {
+            "height": 0.65,
+            "width": 0.7
+        },
+        "baby": {
+            "height": 0.39,
+            "width": 0.42
+        }
+    },
+    "axolotl": {
+        "adult": {
+            "height": 0.42,
+            "width": 0.75
+        },
+        "baby": {
+            "height": 0.21,
+            "width": 0.375
+        }
+    },
+    "bat": {
+        "single": {
+            "height": 0.9,
+            "width": 0.5
+        }
+    },
+    "bee": {
+        "adult": {
+            "height": 0.5,
+            "width": 0.55
+        },
+        "baby": {
+            "height": 0.25,
+            "width": 0.275
+        }
+    },
+    "blaze": {
+        "single": {
+            "height": 1.8,
+            "width": 0.6
+        }
+    },
+    "bogged": {
+        "single": {
+            "height": 1.9,
+            "width": 0.6
+        }
+    },
+    "breeze": {
+        "single": {
+            "height": 1.77,
+            "width": 0.6
+        }
+    },
+    "camel": {
+        "adult": {
+            "height": 0.945,
+            "width": 1.7
+        },
+        "baby": {
+            "height": 0.4725,
+            "width": 0.85
+        }
+    },
+    "cat": {
+        "adult": {
+            "height": 0.7,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.35,
+            "width": 0.3
+        }
+    },
+    "cave_spider": {
+        "single": {
+            "height": 0.5,
+            "width": 0.7
+        }
+    },
+    "chicken": {
+        "adult": {
+            "height": 0.8,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.4,
+            "width": 0.3
+        }
+    },
+    "cod": {
+        "single": {
+            "height": 0.3,
+            "width": 0.5
+        }
+    },
+    "cow": {
+        "adult": {
+            "height": 1.3,
+            "width": 0.9
+        },
+        "baby": {
+            "height": 0.65,
+            "width": 0.45
+        }
+    },
+    "creaking": {
+        "single": {
+            "height": 2.7,
+            "width": 0.9
+        }
+    },
+    "creeper": {
+        "single": {
+            "height": 1.8,
+            "width": 0.6
+        }
+    },
+    "dolphin": {
+        "adult": {
+            "height": 0.6,
+            "width": 0.9
+        },
+        "baby": {
+            "height": 0.39,
+            "width": 0.585
+        }
+    },
+    "donkey": {
+        "adult": {
+            "height": 1.6,
+            "width": 1.4
+        },
+        "baby": {
+            "height": 0.8,
+            "width": 0.7
+        }
+    },
+    "drowned": {
+        "adult": {
+            "height": 1.9,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.95,
+            "width": 0.3
+        }
+    },
+    "elder_guardian": {
+        "single": {
+            "height": 1.9975,
+            "width": 1.9975
+        }
+    },
+    "ender_dragon": {
+        "single": {
+            "height": 8.0,
+            "width": 16.0
+        }
+    },
+    "enderman": {
+        "single": {
+            "height": 2.9,
+            "width": 0.6
+        }
+    },
+    "endermite": {
+        "single": {
+            "height": 0.3,
+            "width": 0.4
+        }
+    },
+    "evoker": {
+        "single": {
+            "height": 1.95,
+            "width": 0.6
+        }
+    },
+    "fox": {
+        "adult": {
+            "height": 0.7,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.35,
+            "width": 0.3
+        }
+    },
+    "frog": {
+        "single": {
+            "height": 0.5,
+            "width": 0.5
+        }
+    },
+    "ghast": {
+        "single": {
+            "height": 4.0,
+            "width": 4.0
+        }
+    },
+    "happy_ghast": {
+        "single": {
+            "height": 4.0,
+            "width": 4.0
+        }
+    },
+    "glow_squid": {
+        "adult": {
+            "height": 0.8,
+            "width": 0.8
+        },
+        "baby": {
+            "height": 0.4,
+            "width": 0.4
+        }
+    },
+    "goat": {
+        "adult": {
+            "height": 0.91,
+            "width": 0.63
+        },
+        "baby": {
+            "height": 0.455,
+            "width": 0.315
+        }
+    },
+    "guardian": {
+        "single": {
+            "height": 0.85,
+            "width": 0.85
+        }
+    },
+    "hoglin": {
+        "adult": {
+            "height": 1.4,
+            "width": 1.3965
+        },
+        "baby": {
+            "height": 0.7,
+            "width": 0.6982
+        }
+    },
+    "horse": {
+        "adult": {
+            "height": 1.6,
+            "width": 1.4
+        },
+        "baby": {
+            "height": 0.8,
+            "width": 0.7
+        }
+    },
+    "husk": {
+        "adult": {
+            "height": 1.9,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.95,
+            "width": 0.3
+        }
+    },
+    "iron_golem": {
+        "single": {
+            "height": 2.9,
+            "width": 1.4
+        }
+    },
+    "llama": {
+        "adult": {
+            "height": 1.87,
+            "width": 0.9
+        },
+        "baby": {
+            "height": 0.935,
+            "width": 0.45
+        }
+    },
+    "magma_cube": {
+        "single": {
+            "height": 0.52,
+            "width": 0.52
+        }
+    },
+    "mooshroom": {
+        "adult": {
+            "height": 1.3,
+            "width": 0.9
+        },
+        "baby": {
+            "height": 0.65,
+            "width": 0.45
+        }
+    },
+    "mule": {
+        "adult": {
+            "height": 1.6,
+            "width": 1.4
+        },
+        "baby": {
+            "height": 0.8,
+            "width": 0.7
+        }
+    },
+    "ocelot": {
+        "adult": {
+            "height": 0.7,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.35,
+            "width": 0.3
+        }
+    },
+    "panda": {
+        "adult": {
+            "height": 1.25,
+            "width": 1.3
+        },
+        "baby": {
+            "height": 0.625,
+            "width": 0.65
+        }
+    },
+    "parrot": {
+        "single": {
+            "height": 1.0,
+            "width": 0.5
+        }
+    },
+    "phantom": {
+        "single": {
+            "height": 0.5,
+            "width": 0.9
+        }
+    },
+    "pig": {
+        "adult": {
+            "height": 0.9,
+            "width": 0.9
+        },
+        "baby": {
+            "height": 0.45,
+            "width": 0.45
+        }
+    },
+    "piglin_brute": {
+        "single": {
+            "height": 1.95,
+            "width": 0.6
+        }
+    },
+    "piglin": {
+        "single": {
+            "height": 1.9,
+            "width": 0.6
+        }
+    },
+    "pillager": {
+        "single": {
+            "height": 1.9,
+            "width": 0.6
+        }
+    },
+    "polar_bear": {
+        "adult": {
+            "height": 1.4,
+            "width": 1.4
+        },
+        "baby": {
+            "height": 0.7,
+            "width": 0.7
+        }
+    },
+    "pufferfish": {
+        "single": {
+            "height": 0.96,
+            "width": 0.96
+        }
+    },
+    "rabbit": {
+        "adult": {
+            "height": 0.402,
+            "width": 0.402
+        },
+        "baby": {
+            "height": 0.268,
+            "width": 0.268
+        }
+    },
+    "ravager": {
+        "single": {
+            "height": 2.2,
+            "width": 1.95
+        }
+    },
+    "salmon": {
+        "single": {
+            "height": 0.75,
+            "width": 0.75
+        }
+    },
+    "sheep": {
+        "adult": {
+            "height": 1.3,
+            "width": 0.9
+        },
+        "baby": {
+            "height": 0.65,
+            "width": 0.45
+        }
+    },
+    "shulker": {
+        "single": {
+            "height": 2.0,
+            "width": 1.0
+        }
+    },
+    "silverfish": {
+        "single": {
+            "height": 0.3,
+            "width": 0.4
+        }
+    },
+    "skeleton_horse": {
+        "adult": {
+            "height": 1.6,
+            "width": 1.4
+        },
+        "baby": {
+            "height": 0.8,
+            "width": 0.7
+        }
+    },
+    "skeleton": {
+        "single": {
+            "height": 1.9,
+            "width": 0.6
+        }
+    },
+    "slime": {
+        "single": {
+            "height": 0.52,
+            "width": 0.52
+        }
+    },
+    "sniffer": {
+        "adult": {
+            "height": 0.7875,
+            "width": 0.855
+        }
+    },
+    "snow_golem": {
+        "single": {
+            "height": 1.9,
+            "width": 0.7
+        }
+    },
+    "spider": {
+        "single": {
+            "height": 0.9,
+            "width": 1.4
+        }
+    },
+    "squid": {
+        "adult": {
+            "height": 0.95,
+            "width": 0.95
+        },
+        "baby": {
+            "height": 0.475,
+            "width": 0.475
+        }
+    },
+    "stray": {
+        "single": {
+            "height": 1.9,
+            "width": 0.6
+        }
+    },
+    "strider": {
+        "adult": {
+            "height": 1.7,
+            "width": 0.9
+        },
+        "baby": {
+            "height": 0.85,
+            "width": 0.45
+        }
+    },
+    "tadpole": {
+        "single": {
+            "height": 0.3,
+            "width": 0.4
+        }
+    },
+    "trader_llama": {
+        "adult": {
+            "height": 1.87,
+            "width": 0.9
+        },
+        "baby": {
+            "height": 0.935,
+            "width": 0.45
+        }
+    },
+    "tropical_fish": {
+        "single": {
+            "height": 0.4,
+            "width": 0.5
+        }
+    },
+    "turtle": {
+        "adult": {
+            "height": 0.4,
+            "width": 1.2
+        },
+        "baby": {
+            "height": 0.032,
+            "width": 0.096
+        }
+    },
+    "vex": {
+        "single": {
+            "height": 0.8,
+            "width": 0.4
+        }
+    },
+    "villager": {
+        "adult": {
+            "height": 1.9,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.95,
+            "width": 0.3
+        }
+    },
+    "vindicator": {
+        "single": {
+            "height": 1.9,
+            "width": 0.6
+        }
+    },
+    "wandering_trader": {
+        "single": {
+            "height": 1.9,
+            "width": 0.6
+        }
+    },
+    "warden": {
+        "single": {
+            "height": 2.9,
+            "width": 0.9
+        }
+    },
+    "witch": {
+        "single": {
+            "height": 1.9,
+            "width": 0.6
+        }
+    },
+    "wither_skeleton": {
+        "single": {
+            "height": 2.4,
+            "width": 0.7
+        }
+    },
+    "wither": {
+        "single": {
+            "height": 3.5,
+            "width": 0.9
+        }
+    },
+    "wolf": {
+        "adult": {
+            "height": 0.8,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.4,
+            "width": 0.3
+        }
+    },
+    "zoglin": {
+        "adult": {
+            "height": 1.4,
+            "width": 1.3965
+        },
+        "baby": {
+            "height": 0.7,
+            "width": 0.6982
+        }
+    },
+    "zombie_horse": {
+        "adult": {
+            "height": 1.6,
+            "width": 1.4
+        },
+        "baby": {
+            "height": 0.8,
+            "width": 0.7
+        }
+    },
+    "zombie": {
+        "adult": {
+            "height": 1.9,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.95,
+            "width": 0.3
+        }
+    },
+    "zombie_villager": {
+        "adult": {
+            "height": 1.9,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.95,
+            "width": 0.3
+        }
+    },
+    "zombified_piglin": {
+        "adult": {
+            "height": 1.9,
+            "width": 0.6
+        },
+        "baby": {
+            "height": 0.95,
+            "width": 0.3
+        }
+    }
+}

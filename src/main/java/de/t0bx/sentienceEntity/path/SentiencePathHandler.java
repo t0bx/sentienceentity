@@ -3,6 +3,7 @@ package de.t0bx.sentienceEntity.path;
 import com.google.gson.JsonObject;
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.path.data.SentiencePath;
+import de.t0bx.sentienceEntity.path.data.SentiencePathType;
 import de.t0bx.sentienceEntity.path.data.SentiencePointPath;
 import de.t0bx.sentienceEntity.utils.JsonDocument;
 import org.bukkit.Bukkit;
@@ -17,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
 @SuppressWarnings({"ResultOfMethodCallIgnored", "CallToPrintStackTrace"})
 public class SentiencePathHandler {
@@ -44,9 +46,11 @@ public class SentiencePathHandler {
     public void applyPath(int entityId, String pathName) {
         SentiencePath path = this.cachedPaths.getOrDefault(pathName, null);
         if (path == null) return;
+        if (this.inPath.containsKey(entityId)) return;
 
         SentiencePathExecutor executor = new SentiencePathExecutor(entityId, path);
         executor.preparePath();
+        this.inPath.put(entityId, executor);
     }
 
     /**
@@ -60,12 +64,55 @@ public class SentiencePathHandler {
      *                 Must be unique and not already present in the cache.
      * @throws IllegalArgumentException If a path with the specified name already exists.
      */
-    public void createPath(String pathName) {
+    public void createPath(String pathName, SentiencePathType pathType) {
         if (this.cachedPaths.containsKey(pathName))
             throw new IllegalArgumentException("Path with name " + pathName + " already exists!");
 
-        SentiencePath path = new SentiencePath(pathName);
+        SentiencePath path = new SentiencePath(pathName, pathType);
         this.cachedPaths.put(pathName, path);
+
+        File pathFile = new File(SentienceEntity.getInstance().getDataFolder(), "paths/" + pathName + ".json");
+        this.jsonDocument = JsonDocument.loadDocument(pathFile);
+
+        if (this.jsonDocument == null) {
+            this.jsonDocument = new JsonDocument();
+        }
+
+        this.jsonDocument.setString("trigger", pathType.toString());
+
+        try {
+            this.jsonDocument.save(pathFile);
+        } catch (IOException exception) {
+            SentienceEntity.getInstance().getLogger().log(Level.SEVERE, "Failed to save path: ", exception);
+        }
+    }
+
+    /**
+     * Updates the trigger of a sentience path with the specified path name and type.
+     *
+     * This method retrieves the JSON configuration file associated with the given path name.
+     * If the file does not exist, a new JSON document is created. It updates the "trigger"
+     * field in the JSON document to the specified path type and saves the changes back to
+     * the file. In case of an I/O failure during saving, a severe log message is recorded.
+     *
+     * @param pathName The name of the sentience path to be updated. Must not be null or empty.
+     * @param pathType The {@code SentiencePathType} to set as the new trigger for the path. Must not be null.
+     */
+    public void updateTrigger(String pathName, SentiencePathType pathType) {
+        File pathFile = new File(SentienceEntity.getInstance().getDataFolder(), "paths/" + pathName + ".json");
+
+        this.jsonDocument = JsonDocument.loadDocument(pathFile);
+        if (this.jsonDocument == null) {
+            this.jsonDocument = new JsonDocument();
+        }
+
+        this.jsonDocument.update("trigger", pathType.toString());
+
+        try {
+            this.jsonDocument.save(pathFile);
+        } catch (IOException exception) {
+            SentienceEntity.getInstance().getLogger().log(Level.SEVERE, "Failed to save path: ", exception);
+        }
     }
 
     /**
@@ -84,6 +131,9 @@ public class SentiencePathHandler {
             throw new IllegalArgumentException("Path with name " + pathName + " does not exist!");
 
         this.cachedPaths.remove(pathName);
+
+        File pathFile = new File(SentienceEntity.getInstance().getDataFolder(), "paths/" + pathName + ".json");
+        pathFile.delete();
     }
 
     /**
@@ -248,7 +298,9 @@ public class SentiencePathHandler {
                 if (pathObject == null) continue;
 
                 String pathName = file.getName().substring(0, file.getName().length() - 5);
-                SentiencePath path = new SentiencePath(pathName);
+                SentiencePathType pathType = SentiencePathType.valueOf(pathObject.get("trigger").getAsString().toUpperCase());
+
+                SentiencePath path = new SentiencePath(pathName, pathType);
                 path.getPaths().clear();
 
                 int index = 0;

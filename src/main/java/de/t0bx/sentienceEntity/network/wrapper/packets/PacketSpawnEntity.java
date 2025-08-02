@@ -30,7 +30,6 @@
 
 package de.t0bx.sentienceEntity.network.wrapper.packets;
 
-import de.t0bx.sentienceEntity.network.utils.EntityType;
 import de.t0bx.sentienceEntity.network.utils.PacketId;
 import de.t0bx.sentienceEntity.network.utils.PacketUtils;
 import de.t0bx.sentienceEntity.network.version.registries.EntityTypeRegistry;
@@ -39,6 +38,7 @@ import de.t0bx.sentienceEntity.network.wrapper.PacketWrapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.bukkit.Location;
+import org.bukkit.entity.EntityType;
 
 import java.util.UUID;
 
@@ -101,7 +101,7 @@ public class PacketSpawnEntity implements PacketWrapper {
 
         PacketUtils.writeVarInt(buf, entityId);
         PacketUtils.writeUUID(buf, uuid);
-        PacketUtils.writeVarInt(buf, EntityTypeRegistry.getEntityType(type));
+        PacketUtils.writeVarInt(buf, EntityTypeRegistry.getEntityTypeId(type));
         PacketUtils.writeDouble(buf, location.getX());
         PacketUtils.writeDouble(buf, location.getY());
         PacketUtils.writeDouble(buf, location.getZ());
