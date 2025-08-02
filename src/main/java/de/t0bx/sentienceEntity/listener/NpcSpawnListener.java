@@ -33,6 +33,9 @@ package de.t0bx.sentienceEntity.listener;
 import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.hologram.HologramManager;
 import de.t0bx.sentienceEntity.npc.NpcsHandler;
+import de.t0bx.sentienceEntity.npc.SentienceNPC;
+import de.t0bx.sentienceEntity.path.SentiencePathHandler;
+import de.t0bx.sentienceEntity.path.data.SentiencePathType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -72,6 +75,7 @@ public class NpcSpawnListener implements Listener {
     @EventHandler
     public void onWorldSwitch(PlayerChangedWorldEvent event) {
         Player player = event.getPlayer();
+
         this.npcsHandler.despawnAllNPCs(player);
         this.hologramManager.unShowAllHolograms(player);
         this.npcsHandler.spawnAllNPCs(player);

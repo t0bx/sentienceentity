@@ -18,41 +18,59 @@ public class AsyncPlayerChatListener implements Listener {
 
     private final NpcCreation npcCreation;
     private final NpcsHandler npcsHandler;
+    private final MiniMessage miniMessage;
+    private final String prefix;
 
     public AsyncPlayerChatListener(NpcCreation npcCreation, NpcsHandler npcsHandler) {
         this.npcCreation = npcCreation;
         this.npcsHandler = npcsHandler;
+        this.miniMessage = MiniMessage.miniMessage();
+        this.prefix = SentienceEntity.getInstance().getPrefix();
     }
 
     @EventHandler
     public void onAsyncPlayerChat(AsyncChatEvent event) {
         Player player = event.getPlayer();
-        if (this.npcCreation.isNpcCreation(player)) {
-            event.setCancelled(true);
-            NpcCreation.NpcCreationBuilder builder = this.npcCreation.getCreationBuilder(player);
+        if (!this.npcCreation.isNpcCreation(player)) return;
 
-            if (builder.getName() == null) {
-                String name = MiniMessage.miniMessage().serialize(event.message());
+        event.setCancelled(true);
+        NpcCreation.NpcCreationBuilder builder = this.npcCreation.getCreationBuilder(player);
+
+        switch (builder.getStep()) {
+            case NAME -> {
+                String name = miniMessage.serialize(event.message());
                 builder.setName(name);
-                sendMessage(player, MiniMessage.miniMessage().deserialize(SentienceEntity.getInstance().getPrefix() + "Name set to: <white>" + name));
+                sendMessage(player, miniMessage.deserialize(prefix + "Name set to: <white>" + name));
 
                 Bukkit.getScheduler().runTask(SentienceEntity.getInstance(), () -> this.npcCreation.openInventory(player, 0));
-                return;
+                builder.nextStep();
             }
 
-            if (builder.getPlayerName() == null) {
-                String name = MiniMessage.miniMessage().serialize(event.message());
+            case PLAYER_NAME -> {
+                String name = miniMessage.serialize(event.message());
                 builder.setPlayerName(name);
+                builder.nextStep();
 
-                sendMessage(player, MiniMessage.miniMessage().deserialize(SentienceEntity.getInstance().getPrefix() + "Player name set to: <white>" + name));
+                sendMessage(player, miniMessage.deserialize(prefix + "Player name set to: <white>" + name));
+                sendMessage(player, miniMessage.deserialize(prefix + "Should this npc only be visible with a certain permission? (Type <red>none <gray>for no permission)"));
+            }
+
+            case PERMISSION -> {
+                String message = miniMessage.serialize(event.message());
+
+                builder.setPermission(message);
+
+                final String permission = message.contains("none") ? null : builder.getPermission();
+
                 this.npcsHandler.createNPC(
                         builder.getName(),
-                        EntityType.PLAYER,
+                        builder.getEntityType(),
                         builder.getPlayerName(),
-                        player.getLocation()
+                        player.getLocation(),
+                        permission
                 );
 
-                sendMessage(player, MiniMessage.miniMessage().deserialize(SentienceEntity.getInstance().getPrefix() + "<green>You've created the npc " + this.npcCreation.getCreationBuilder(player).getName()));
+                sendMessage(player, miniMessage.deserialize(prefix + "<green>You've created the npc " + builder.getName()));
                 player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.0f);
                 this.npcCreation.removeCreationBuilder(player);
             }

@@ -188,7 +188,7 @@ public class SentienceHologramCommand implements CommandExecutor, TabCompleter {
         }
 
         SentienceNPC npc = this.npcsHandler.getNPC(npcName);
-        this.hologramManager.createHologram(npcName, npc.getLocation());
+        this.hologramManager.createHologram(npcName);
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "You have created a hologram for the npc '" + npcName + "'."));
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Use /sh addTextLine to add a Text line to the hologram!"));
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Use /sh addItemLine to add a Item line to the hologram!"));

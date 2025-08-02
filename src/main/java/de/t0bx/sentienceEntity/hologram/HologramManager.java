@@ -99,17 +99,14 @@ public class HologramManager {
      * If a hologram with the specified NPC name already exists, this method does nothing.
      *
      * @param npcName the name of the NPC for which the hologram is being created
-     * @param location the location at which the hologram will be displayed
      */
-    public void createHologram(String npcName, Location location) {
+    public void createHologram(String npcName) {
         if (this.cachedHolograms.containsKey(npcName)) return;
-
 
         SentienceHologram hologram = new SentienceHologram(
                 ReflectionUtils.generateValidMinecraftEntityId(),
-                this.npcshandler.getNPC(npcName).getEntityType(),
                 UUID.randomUUID(),
-                location
+                this.npcshandler.getNPC(npcName)
         );
         this.cachedHolograms.put(npcName, hologram);
     }
@@ -409,9 +406,8 @@ public class HologramManager {
         SentienceNPC npc = this.npcshandler.getNPC(npcName);
         SentienceHologram hologram = new SentienceHologram(
                 ReflectionUtils.generateValidMinecraftEntityId(),
-                npc.getEntityType(),
                 UUID.randomUUID(),
-                npc.getLocation()
+                npc
         );
 
         int index = 0;

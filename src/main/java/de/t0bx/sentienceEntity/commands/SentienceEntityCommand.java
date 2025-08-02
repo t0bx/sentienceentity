@@ -31,16 +31,19 @@
 package de.t0bx.sentienceEntity.commands;
 
 import de.t0bx.sentienceEntity.SentienceEntity;
-import de.t0bx.sentienceEntity.hologram.HologramManager;
+import de.t0bx.sentienceEntity.network.inventory.equipment.Equipment;
 import de.t0bx.sentienceEntity.network.inventory.equipment.EquipmentSlot;
 import de.t0bx.sentienceEntity.npc.NpcsHandler;
+import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import de.t0bx.sentienceEntity.npc.setup.NpcCreation;
+import de.t0bx.sentienceEntity.path.SentiencePathHandler;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +59,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
     private final String prefix;
     private final NpcCreation npcCreation;
     private final NpcsHandler npcsHandler;
+    private final SentiencePathHandler pathHandler;
 
     private final List<Player> inspectList;
 
@@ -67,12 +71,34 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
             "helmet", "HELMET"
     );
 
+    private static final Set<EntityType> VALID_ENTITY_TYPES = Set.of(
+            EntityType.PLAYER,
+            EntityType.DROWNED,
+            EntityType.PIGLIN_BRUTE,
+            EntityType.PIGLIN,
+            EntityType.SKELETON,
+            EntityType.WITHER_SKELETON,
+            EntityType.ZOMBIE,
+            EntityType.ZOMBIE_VILLAGER,
+            EntityType.ZOMBIFIED_PIGLIN
+    );
+
+    private static final Map<String, EquipmentSlot> TYPE_TO_SLOT = Map.of(
+            "mainhand", EquipmentSlot.MAIN_HAND,
+            "offhand", EquipmentSlot.OFF_HAND,
+            "boots", EquipmentSlot.BOOTS,
+            "leggings", EquipmentSlot.LEGGINGS,
+            "chestplate", EquipmentSlot.CHEST_PLATE,
+            "helmet", EquipmentSlot.HELMET
+    );
+
     public SentienceEntityCommand(SentienceEntity sentienceEntity) {
         this.miniMessage = MiniMessage.miniMessage();
         this.prefix = sentienceEntity.getPrefix();
         this.npcCreation = sentienceEntity.getNpcCreation();
         this.npcsHandler = sentienceEntity.getNpcshandler();
         this.inspectList = sentienceEntity.getInspectList();
+        this.pathHandler = sentienceEntity.getSentiencePathHandler();
     }
 
     @Override
@@ -160,6 +186,9 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
             sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se editnpc <Name> updateLocation"));
             sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se editnpc <Name> setSkin <Player Name>"));
             sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se editnpc <Name> setItem <Mainhand, Offhand, Boots, Leggings, Chestplate, Helmet>"));
+            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se editnpc <Name> removeItem <Mainhand, Offhand, Boots, Leggings, Chestplate, Helmet>"));
+            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se editnpc <Name> setPermission <Permission> <dark_gray>| <gray>Set a permission for the npc <red>none <gray>for no permission"));
+            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se editnpc <Name> setPath <Path Name> <dark_gray>| <gray>Bound a path to the npc."));
             return;
         }
 
@@ -178,7 +207,7 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
                 String response = this.npcsHandler.updateLookAtPlayer(npcName);
                 switch (response.toLowerCase()) {
-                    case "error" -> sendMessage(player, this.miniMessage.deserialize(this.prefix + "There was an error updating the npc with the name '" + npcName + "'!"));
+                    case "error" -> sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>There was an error updating the npc with the name '" + npcName + "'!"));
                     case "true" -> sendMessage(player, this.miniMessage.deserialize(this.prefix + "The npc '" + npcName + "' will now look at players!"));
                     case "false" -> sendMessage(player, this.miniMessage.deserialize(this.prefix + "The npc '" + npcName + "' will no longer look at players!"));
                 }
@@ -190,9 +219,15 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
                     return;
                 }
 
+                SentienceNPC npc = this.npcsHandler.getNPC(npcName);
+                if (npc.getEntityType() != EntityType.PLAYER) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>The npc '" + npcName + "' is not a player!"));
+                    return;
+                }
+
                 String response = this.npcsHandler.updateSneakWithPlayer(npcName);
                 switch (response.toLowerCase()) {
-                    case "error" -> sendMessage(player, this.miniMessage.deserialize(this.prefix + "There was an error updating the npc with the name '" + npcName + "'!"));
+                    case "error" -> sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>There was an error updating the npc with the name '" + npcName + "'!"));
                     case "true" -> sendMessage(player, this.miniMessage.deserialize(this.prefix + "The npc '" + npcName + "' will now sneak with players!"));
                     case "false" -> sendMessage(player, this.miniMessage.deserialize(this.prefix + "The npc '" + npcName + "' will no longer sneak with players!"));
                 }
@@ -214,6 +249,12 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
                     return;
                 }
 
+                SentienceNPC npc = this.npcsHandler.getNPC(npcName);
+                if (npc.getEntityType() != EntityType.PLAYER) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>The npc '" + npcName + "' is not a player!"));
+                    return;
+                }
+
                 String playerName = args[3];
                 this.npcsHandler.updateSkin(npcName, playerName, true);
                 sendMessage(player, this.miniMessage.deserialize(this.prefix + "You've updated the skin of the npc '" + npcName + "'"));
@@ -227,35 +268,48 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
                 ItemStack itemStack = player.getInventory().getItemInMainHand();
                 if (itemStack.getType() == Material.AIR) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "You need to hold an item in your hand!"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>You need to hold an item in your hand!"));
                     return;
                 }
 
                 String type = args[3].toLowerCase();
                 if (!VALID_TYPES.contains(type)) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "The type '" + type + "' is not valid!"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>The type '" + type + "' is not valid!"));
+                    return;
+                }
+
+                SentienceNPC npc = this.npcsHandler.getNPC(npcName);
+
+                if (npc.getEntityType() == EntityType.PILLAGER && !(type.equalsIgnoreCase("mainhand") || type.equalsIgnoreCase("offhand"))) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>The pillager can't have an item in the '" + type + "' slot!"));
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>You can only set an item in the mainhand or offhand!"));
+                    return;
+                } else if (!VALID_ENTITY_TYPES.contains(npc.getEntityType()) && npc.getEntityType() != EntityType.PILLAGER) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>The npc '" + npcName + "' can't have an item in the '" + type + "' slot!"));
                     return;
                 }
 
                 if (REQUIRED_SUFFIX.containsKey(type)) {
                     String requiredSuffix = REQUIRED_SUFFIX.get(type);
                     if (!itemStack.getType().name().endsWith(requiredSuffix)) {
-                        sendMessage(player, this.miniMessage.deserialize(this.prefix + "The item in your hand needs to be a " + type + "!"));
+                        sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>The item in your hand needs to be a " + type + "!"));
                         return;
                     }
                 }
 
-                EquipmentSlot equipmentSlot;
-                switch (type) {
-                    case "mainhand" -> equipmentSlot = EquipmentSlot.MAIN_HAND;
-                    case "offhand" -> equipmentSlot = EquipmentSlot.OFF_HAND;
-                    case "boots" -> equipmentSlot = EquipmentSlot.BOOTS;
-                    case "leggings" -> equipmentSlot = EquipmentSlot.LEGGINGS;
-                    case "chestplate" -> equipmentSlot = EquipmentSlot.CHEST_PLATE;
-                    case "helmet" -> equipmentSlot = EquipmentSlot.HELMET;
-                    default -> equipmentSlot = null;
-                }
+                EquipmentSlot equipmentSlot = TYPE_TO_SLOT.get(type);
                 if (equipmentSlot == null) return;
+
+                SentienceNPC.EquipmentData equipmentData = npc.getEquipmentData();
+                if (equipmentData != null) {
+                    for (Equipment equipment : equipmentData.getEquipment() ) {
+                        if (equipment.getSlot() == equipmentSlot &&
+                                equipment.getItemStack().getType() == itemStack.getType() ) {
+                            sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>The item in your hand is already equipped in the '" + type + "' slot!"));
+                            return;
+                        }
+                    }
+                }
 
                 this.npcsHandler.updateEquipment(npcName, equipmentSlot, itemStack);
             }
@@ -272,19 +326,42 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
                     return;
                 }
 
-                EquipmentSlot equipmentSlot;
-                switch (type) {
-                    case "mainhand" -> equipmentSlot = EquipmentSlot.MAIN_HAND;
-                    case "offhand" -> equipmentSlot = EquipmentSlot.OFF_HAND;
-                    case "boots" -> equipmentSlot = EquipmentSlot.BOOTS;
-                    case "leggings" -> equipmentSlot = EquipmentSlot.LEGGINGS;
-                    case "chestplate" -> equipmentSlot = EquipmentSlot.CHEST_PLATE;
-                    case "helmet" -> equipmentSlot = EquipmentSlot.HELMET;
-                    default -> equipmentSlot = null;
-                }
+                EquipmentSlot equipmentSlot = TYPE_TO_SLOT.get(type);
                 if (equipmentSlot == null) return;
 
                 this.npcsHandler.updateEquipment(npcName, equipmentSlot, null);
+            }
+
+            case "setpermission" -> {
+                if (args.length != 4) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se editnpc <Name> setPermission <Permission> <dark_gray>| <gray>Set a permission for the npc <red>none <gray>for no permission"));
+                    return;
+                }
+
+                String permission = args[3].equalsIgnoreCase("none") ? null : args[3];
+                this.npcsHandler.updatePermission(npcName, permission);
+
+                String message = permission == null ?
+                        "The npc '" + npcName + "' will now be visible with no permission!" :
+                        "The npc '" + npcName + "' will now be only visible with the permission '" + permission + "'!";
+
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + message));
+            }
+
+            case "setpath" -> {
+                if (args.length != 4) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se editnpc <Name> setPath <Path Name> <dark_gray>| <gray>Bound a path to the npc."));
+                    return;
+                }
+
+                String pathName = args[3];
+                if (!pathHandler.doesPathNameExist(pathName)) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>There is no path with the name '" + pathName + "'!"));
+                    return;
+                }
+
+                this.npcsHandler.setPath(npcName, pathName);
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + "You've updated the path of the npc '" + npcName + "'"));
             }
         }
     }
@@ -350,11 +427,13 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
                 if (args.length == 2) {
                     return npcNames;
                 } else if (args.length == 3) {
-                    return List.of("shouldLookAtPlayer", "shouldSneakWithPlayer", "updateLocation", "setSkin", "setItem", "removeItem");
+                    return List.of("shouldLookAtPlayer", "shouldSneakWithPlayer", "updateLocation", "setSkin", "setItem", "removeItem", "setPermission", "setPath");
                 } else if (args.length == 4) {
                     return switch (args[2].toLowerCase()) {
                         case "setskin" -> Collections.singletonList("<Player Name>");
                         case "setitem", "removeitem" -> List.of("Mainhand", "Offhand", "Boots", "Leggings", "Chestplate", "Helmet");
+                        case "setpermission" -> List.of("none", "<Permission>");
+                        case "setpath" -> this.pathHandler.getPaths().keySet().stream().toList();
                         default -> Collections.emptyList();
                     };
                 }
