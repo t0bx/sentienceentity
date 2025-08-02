@@ -44,10 +44,7 @@ import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Pig;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BoundingBox;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +53,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 @Getter
+@Setter
 public class SentienceNPC {
 
     private final String name;
@@ -66,18 +64,19 @@ public class SentienceNPC {
 
     private final NpcProfile profile;
 
-    @Setter
     private Location location;
 
-    @Setter
     private boolean shouldLookAtPlayer;
 
-    @Setter
     private boolean shouldSneakWithPlayer;
 
     private final Set<PacketPlayer> channels = new HashSet<>();
 
     private final EquipmentData equipmentData;
+
+    private String permission;
+
+    private String boundedPathName;
 
     /**
      * Constructs a new instance of SentienceNPC with the specified entity ID and NPC profile.
@@ -102,6 +101,8 @@ public class SentienceNPC {
      */
     public void spawn(Player player) {
         PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
+
+        if (this.getPermission() != null && !player.hasPermission(this.getPermission())) return;
 
         if (this.hasSpawned(packetPlayer)) return;
         if (this.getLocation() == null) return;
@@ -142,10 +143,15 @@ public class SentienceNPC {
         packetPlayer.sendPacket(addEntityPacket);
 
         List<MetadataEntry> metadataEntries = new ArrayList<>();
-        metadataEntries.add(new MetadataEntry(4, MetadataType.BOOLEAN, true));
+        metadataEntries.add(new MetadataEntry(4, MetadataType.BOOLEAN, true)); //Is silent
 
         if (entityType == EntityType.PLAYER) {
-            metadataEntries.add(new MetadataEntry(17, MetadataType.BYTE, (byte) 127));
+            metadataEntries.add(new MetadataEntry(17, MetadataType.BYTE, (byte) 127)); //Show all skin parts
+        }
+
+        Class<?> entityClass = entityType.getEntityClass();
+        if (entityClass != null && Mob.class.isAssignableFrom(entityClass)) {
+            metadataEntries.add(new MetadataEntry(15, MetadataType.BYTE, (byte) 0x01)); // NoAI prevents Npc to "glitch"
         }
 
         var metadataPacket = new PacketSetEntityMetadata(entityId, metadataEntries);
@@ -165,11 +171,10 @@ public class SentienceNPC {
             );
 
             packetPlayer.sendPacket(teamPlayerAddPacket);
-
-            this.showEquipment(player);
         }
 
         this.channels.add(packetPlayer);
+        this.showEquipment(player);
     }
 
     /**

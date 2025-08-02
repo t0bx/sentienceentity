@@ -1,5 +1,6 @@
 package de.t0bx.sentienceEntity.network.inventory.item;
 
+import de.t0bx.sentienceEntity.network.inventory.equipment.EquipmentSlot;
 import de.t0bx.sentienceEntity.network.nbt.*;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.CustomModelData;
@@ -22,14 +23,14 @@ public class ComponentItemStack {
     private int id;
     private final List<ItemComponent> components = new ArrayList<>();
 
-    public static ComponentItemStack fromBukkit(ItemStack itemStack, int itemId) {
+    public static ComponentItemStack fromBukkit(EquipmentSlot equipmentSlot, ItemStack itemStack, int itemId) {
         ComponentItemStack componentItemStack = new ComponentItemStack();
 
         componentItemStack.count = itemStack.getAmount();
         componentItemStack.id = itemId;
 
         NbtCompoundTag rootTag = new NbtCompoundTag();
-        rootTag.addTag("Slot", new NbtByteTag((byte) 0));
+        rootTag.addTag("Slot", new NbtByteTag((byte) equipmentSlot.getId()));
         rootTag.addTag("id", new NbtStringTag("minecraft:" + itemStack.getType().name().toLowerCase()));
         rootTag.addTag("count", new NbtIntTag(itemStack.getAmount()));
 

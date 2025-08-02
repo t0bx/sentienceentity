@@ -21,11 +21,15 @@ public class InventoryClickListener implements Listener {
     private final NamespacedKey spawnEggKey;
     private final NpcCreation npcCreation;
     private final NpcsHandler npcsHandler;
+    private final MiniMessage miniMessage;
+    private final String prefix;
 
     public InventoryClickListener(NpcCreation npcCreation, NpcsHandler npcsHandler) {
         this.spawnEggKey = new NamespacedKey("se", "spawn_egg");
         this.npcCreation = npcCreation;
         this.npcsHandler = npcsHandler;
+        this.miniMessage = MiniMessage.miniMessage();
+        this.prefix = SentienceEntity.getInstance().getPrefix();
     }
 
     @EventHandler
@@ -36,7 +40,7 @@ public class InventoryClickListener implements Listener {
 
         if (event.getCurrentItem().getItemMeta() == null) return;
 
-        if (event.getView().title().equals(MiniMessage.miniMessage().deserialize("<dark_gray>» <green><b>Select Your Entity Type <dark_gray>«"))) {
+        if (event.getView().title().equals(miniMessage.deserialize("<dark_gray>» <green><b>Select Your Entity Type <dark_gray>«"))) {
             if (event.getSlot() == 45) {
                 this.npcCreation.openInventory(player, 0);
                 return;
@@ -50,25 +54,21 @@ public class InventoryClickListener implements Listener {
             PersistentDataContainer container = event.getCurrentItem().getItemMeta().getPersistentDataContainer();
             if (container.has(spawnEggKey)) {
                 event.setCancelled(true);
+                NpcCreation.NpcCreationBuilder builder = this.npcCreation.getCreationBuilder(player);
 
                 EntityType type = EntityType.valueOf(container.get(spawnEggKey, PersistentDataType.STRING).toUpperCase());
+                builder.setEntityType(type);
                 if (type == EntityType.PLAYER) {
                     event.getView().close();
-                    sendMessage(player, MiniMessage.miniMessage().deserialize(SentienceEntity.getInstance().getPrefix() + "Please type in the player name for the npc skin"));
+                    builder.nextStep();
+                    sendMessage(player, miniMessage.deserialize(prefix + "Please type in the player name for the npc skin"));
                     return;
                 }
 
-                this.npcsHandler.createNPC(
-                        this.npcCreation.getCreationBuilder(player).getName(),
-                        type,
-                        null,
-                        player.getLocation()
-                );
-                sendMessage(player, MiniMessage.miniMessage().deserialize(SentienceEntity.getInstance().getPrefix() + "<green>You've created the npc " + this.npcCreation.getCreationBuilder(player).getName()));
-                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.0f);
-
-                this.npcCreation.removeCreationBuilder(player);
                 event.getView().close();
+                builder.nextStep();
+                builder.nextStep();
+                sendMessage(player, miniMessage.deserialize(prefix + "Should this npc only be visible with a certain permission? (Type <red>none <gray>for no permission)"));
             }
         }
     }

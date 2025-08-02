@@ -10,6 +10,9 @@ import de.t0bx.sentienceEntity.network.interact.InteractType;
 import de.t0bx.sentienceEntity.network.inventory.equipment.Equipment;
 import de.t0bx.sentienceEntity.npc.NpcsHandler;
 import de.t0bx.sentienceEntity.npc.SentienceNPC;
+import de.t0bx.sentienceEntity.path.SentiencePathHandler;
+import de.t0bx.sentienceEntity.path.data.SentiencePath;
+import de.t0bx.sentienceEntity.path.data.SentiencePathType;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,6 +27,7 @@ public class PlayerClickNpcListener implements Listener {
 
     private final NpcsHandler npcsHandler;
     private final HologramManager hologramManager;
+    private final SentiencePathHandler pathHandler;
     private final List<Player> inspectList;
 
     private final MiniMessage miniMessage;
@@ -33,6 +37,7 @@ public class PlayerClickNpcListener implements Listener {
         this.npcsHandler = sentienceEntity.getNpcshandler();
         this.hologramManager = sentienceEntity.getHologramManager();
         this.inspectList = sentienceEntity.getInspectList();
+        this.pathHandler = sentienceEntity.getSentiencePathHandler();
 
         this.miniMessage = MiniMessage.miniMessage();
         this.prefix = sentienceEntity.getPrefix();
@@ -42,61 +47,69 @@ public class PlayerClickNpcListener implements Listener {
     public void onPlayerClickNpc(PlayerClickNpcEvent event) {
         Player player = event.getPlayer();
 
-        if (!this.inspectList.contains(player)) return;
+        if (this.inspectList.contains(player)) {
+            if (event.getInteractType() == InteractType.ATTACK) {
+                SentienceNPC npc = event.getNpc();
+                if (npc == null) return;
 
-        if (event.getInteractType() == InteractType.ATTACK) {
-            SentienceNPC npc = this.npcsHandler.getNPC(event.getNpcName());
-            if (npc == null) return;
+                sendMessage(player, this.miniMessage.deserialize(" "));
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + "Name: <white>" + npc.getName()));
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + "Type: <white>" + npc.getEntityType().name()));
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + "Location: X: <white>"
+                        + String.format("%.3f", npc.getLocation().getX())
+                        + " <gray>Y: <white>" + String.format("%.3f", npc.getLocation().getY())
+                        + " <gray>Z: <white>" + String.format("%.3f", npc.getLocation().getZ())));
 
-            sendMessage(player, this.miniMessage.deserialize(" "));
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Name: <white>" + npc.getName()));
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Type: <white>" + npc.getEntityType().name()));
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Location: X: <white>"
-                    + String.format("%.3f", npc.getLocation().getX())
-                    + " <gray>Y: <white>" + String.format("%.3f", npc.getLocation().getY())
-                    + " <gray>Z: <white>" + String.format("%.3f", npc.getLocation().getZ())));
-
-            if (npc.getEquipmentData() == null) {
-                sendMessage(player, this.miniMessage.deserialize(this.prefix + "Equipment: <red>None"));
-            } else {
-                SentienceNPC.EquipmentData data = npc.getEquipmentData();
-                sendMessage(player, this.miniMessage.deserialize(this.prefix + "Equipment: (<white>" + data.getEquipment().size() + "<gray>)"));
-                for (Equipment equipment : data.getEquipment()) {
-                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Equipment: " +
-                            "(<white>" + equipment.getSlot().name() + "<gray>) " +
-                            "Item: (<white>" + equipment.getItemStack().getType().name() + "<gray>)"));
+                if (npc.getEquipmentData() == null) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Equipment: <red>None"));
+                } else {
+                    SentienceNPC.EquipmentData data = npc.getEquipmentData();
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Equipment: (<white>" + data.getEquipment().size() + "<gray>)"));
+                    for (Equipment equipment : data.getEquipment()) {
+                        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Equipment: " +
+                                "(<white>" + equipment.getSlot().name() + "<gray>) " +
+                                "Item: (<white>" + equipment.getItemStack().getType().name() + "<gray>)"));
+                    }
                 }
-            }
 
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "ShouldSneakWithPlayers: " + (npc.isShouldSneakWithPlayer() ? "<green>✔" : "<red>✘")));
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "ShouldLookAtPlayers: " + (npc.isShouldLookAtPlayer() ? "<green>✔" : "<red>✘")));
-            sendMessage(player, this.miniMessage.deserialize(" "));
-            return;
-        }
-
-        if (event.getInteractHand() != InteractHand.MAIN_HAND) return;
-
-        if (event.getInteractType() == InteractType.INTERACT) {
-            SentienceHologram hologram = this.hologramManager.getHologram(event.getNpcName());
-            if (hologram == null) {
-                sendMessage(player, this.miniMessage.deserialize(this.prefix + "No Hologram bound to npc: <white>" + event.getNpcName()));
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + "ShouldSneakWithPlayers: " + (npc.isShouldSneakWithPlayer() ? "<green>✔" : "<red>✘")));
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + "ShouldLookAtPlayers: " + (npc.isShouldLookAtPlayer() ? "<green>✔" : "<red>✘")));
+                sendMessage(player, this.miniMessage.deserialize(" "));
                 return;
             }
 
-            sendMessage(player, this.miniMessage.deserialize(" "));
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Hologram-bound to npc: <white>" + event.getNpcName()));
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Location: X: <white>"
-                    + String.format("%.3f", hologram.getLocation().getX())
-                    + " <gray>Y: <white>" + String.format("%.3f", hologram.getLocation().getY())
-                    + " <gray>Z: <white>" + String.format("%.3f", hologram.getLocation().getZ())));
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Amount of Lines: (<white>" + hologram.getHologramLines().size() + "<gray>)"));
+            if (event.getInteractHand() != InteractHand.MAIN_HAND) return;
 
-            for (Map.Entry<Integer, HologramLine> entry : hologram.getHologramLines().entrySet()) {
-                sendMessage(player, this.miniMessage.deserialize(this.prefix + "Line: " + entry.getKey() +
-                        ": <white>" + (entry.getValue().getItemStack() != null ? entry.getValue().getItemStack().getType().name() : entry.getValue().getText())));
+            if (event.getInteractType() == InteractType.INTERACT) {
+                SentienceHologram hologram = this.hologramManager.getHologram(event.getNpc().getName());
+                if (hologram == null) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "No Hologram bound to npc: <white>" + event.getNpc().getName()));
+                    return;
+                }
+
+                sendMessage(player, this.miniMessage.deserialize(" "));
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + "Hologram-bound to npc: <white>" + event.getNpc().getName()));
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + "Location: X: <white>"
+                        + String.format("%.3f", hologram.getLocation().getX())
+                        + " <gray>Y: <white>" + String.format("%.3f", hologram.getLocation().getY())
+                        + " <gray>Z: <white>" + String.format("%.3f", hologram.getLocation().getZ())));
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + "Amount of Lines: (<white>" + hologram.getHologramLines().size() + "<gray>)"));
+
+                for (Map.Entry<Integer, HologramLine> entry : hologram.getHologramLines().entrySet()) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Line: " + entry.getKey() +
+                            ": <white>" + (entry.getValue().getItemStack() != null ? entry.getValue().getItemStack().getType().name() : entry.getValue().getText())));
+                }
+
+                sendMessage(player, this.miniMessage.deserialize(" "));
             }
+        }
 
-            sendMessage(player, this.miniMessage.deserialize(" "));
+        String pathName = event.getNpc().getBoundedPathName();
+        if (pathName != null) {
+            SentiencePath path = this.pathHandler.getPath(pathName);
+            if (path.getType() != SentiencePathType.INTERACT) return;
+
+            pathHandler.applyPath(event.getNpc().getEntityId(), pathName);
         }
     }
 }

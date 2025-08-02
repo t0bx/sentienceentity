@@ -36,6 +36,7 @@ import de.t0bx.sentienceEntity.network.PacketPlayer;
 import de.t0bx.sentienceEntity.network.metadata.MetadataEntry;
 import de.t0bx.sentienceEntity.network.metadata.MetadataType;
 import de.t0bx.sentienceEntity.network.wrapper.packets.*;
+import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import de.t0bx.sentienceEntity.utils.ReflectionUtils;
 import lombok.Getter;
 import lombok.Setter;
@@ -67,23 +68,25 @@ public class SentienceHologram {
 
     private final Set<PacketPlayer> channels = new HashSet<>();
 
+    private final SentienceNPC npc;
+
     /**
-     * Constructs a new SentienceHologram with the specified entity ID, unique identifier,
-     * and base location. A SentienceHologram represents a multi-line holographic display
-     * that can be spawned at a given location.
+     * Constructs a new SentienceHologram instance.
      *
-     * @param entityId     the entity ID associated with the hologram
-     * @param uuid         the unique identifier of the hologram
-     * @param baseLocation the base location at which the hologram will be displayed
+     * @param entityId the unique ID of the entity associated with this hologram
+     * @param uuid the unique identifier (UUID) for the hologram
+     * @param npc the {@link SentienceNPC} instance representing the non-player character
+     *            associated with this hologram
      */
-    public SentienceHologram(int entityId, EntityType entityType, UUID uuid, Location baseLocation) {
+    public SentienceHologram(int entityId, UUID uuid, SentienceNPC npc) {
         this.entityId = entityId;
         this.uuid = uuid;
-        this.height = BoundingBoxRegistry.getBoundingBox(entityType).height();
-        this.baseLocation = baseLocation;
+        this.height = BoundingBoxRegistry.getBoundingBox(npc.getEntityType()).height();
+        this.baseLocation = npc.getLocation();
 
         this.hologramLines = new HashMap<>();
         this.location = baseLocation.clone();
+        this.npc = npc;
     }
 
     /**
@@ -390,6 +393,8 @@ public class SentienceHologram {
      */
     public void spawn(Player player) {
         PacketPlayer packetPlayer = SentienceEntity.getInstance().getPacketController().getPlayer(player);
+
+        if (npc.getPermission() != null && !player.hasPermission(npc.getPermission())) return;
 
         if (hasSpawned(packetPlayer)) return;
         if (!player.getWorld().getName().equals(this.getLocation().getWorld().getName())) return;

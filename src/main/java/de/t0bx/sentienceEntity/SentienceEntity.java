@@ -43,8 +43,10 @@ import de.t0bx.sentienceEntity.network.channel.PaperChannelAccess;
 import de.t0bx.sentienceEntity.network.channel.SpigotChannelAccess;
 import de.t0bx.sentienceEntity.network.handler.PacketReceiveHandler;
 import de.t0bx.sentienceEntity.npc.NpcsHandler;
+import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import de.t0bx.sentienceEntity.npc.setup.NpcCreation;
 import de.t0bx.sentienceEntity.path.SentiencePathHandler;
+import de.t0bx.sentienceEntity.path.data.SentiencePathType;
 import de.t0bx.sentienceEntity.update.UpdateManager;
 import de.t0bx.sentienceEntity.utils.SkinFetcher;
 import lombok.Getter;
@@ -169,6 +171,14 @@ public final class SentienceEntity extends JavaPlugin {
 
         api = new SentienceAPI();
         this.getLogger().info("SentienceEntity has been enabled!");
+
+        for (SentienceNPC npc : npcshandler.getAllNPCs()) {
+            String pathName = npc.getBoundedPathName();
+            if (pathName == null) continue;
+            if (sentiencePathHandler.getPath(pathName).getType() != SentiencePathType.LOOP) continue;
+
+            sentiencePathHandler.applyPath(npc.getEntityId(), pathName);
+        }
     }
 
     @Override

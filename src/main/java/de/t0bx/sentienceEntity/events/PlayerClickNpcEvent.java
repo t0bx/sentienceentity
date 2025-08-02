@@ -32,6 +32,7 @@ package de.t0bx.sentienceEntity.events;
 
 import de.t0bx.sentienceEntity.network.interact.InteractHand;
 import de.t0bx.sentienceEntity.network.interact.InteractType;
+import de.t0bx.sentienceEntity.npc.SentienceNPC;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
@@ -44,13 +45,13 @@ public class PlayerClickNpcEvent extends PlayerEvent {
 
     private static final HandlerList HANDLERS = new HandlerList();
 
-    private final String npcName;
+    private final SentienceNPC npc;
     private final InteractHand interactHand;
     private final InteractType interactType;
 
-    public PlayerClickNpcEvent(@NotNull Player who, String npcName, @Nullable InteractHand interactHand, InteractType interactType) {
+    public PlayerClickNpcEvent(@NotNull Player who, SentienceNPC npc, @Nullable InteractHand interactHand, InteractType interactType) {
         super(who);
-        this.npcName = npcName;
+        this.npc = npc;
         this.interactHand = interactHand;
         this.interactType = interactType;
     }

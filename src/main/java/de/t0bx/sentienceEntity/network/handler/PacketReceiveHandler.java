@@ -132,7 +132,7 @@ public class PacketReceiveHandler {
                                     }
 
                                     Bukkit.getScheduler().runTask(SentienceEntity.getInstance(), () -> {
-                                        PlayerClickNpcEvent event = new PlayerClickNpcEvent(player, npcName, hand, type);
+                                        PlayerClickNpcEvent event = new PlayerClickNpcEvent(player, npcsHandler.getNPC(npcName), hand, type);
                                         Bukkit.getPluginManager().callEvent(event);
                                     });
                                 } catch (Exception exception) {

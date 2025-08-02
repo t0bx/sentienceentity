@@ -154,7 +154,7 @@ public class NpcClickListener implements Listener {
     public void onPlayerClickNpc(PlayerClickNpcEvent event) {
         event.getInteractHand(); // Returns the Interacted Hand, MAIN_HAND, OFF_HAND or NONE
         event.getPlayer(); // The Player who interacts with the entity
-        event.getNpcName(); // The npcName which the player interacts with
+        event.getNpc(); // The npc which the player interacts with
         event.getInteractType(); // Returns the Interact Type, ATTACK, INTERACT or INTERACT_AT
 
         //Example
@@ -167,7 +167,7 @@ public class NpcClickListener implements Listener {
         //We only want right clicks on the npc
         if (event.getInteractType() != InteractType.INTERACT) return;
 
-        if (event.getNpcName().equalsIgnoreCase("test")) {
+        if (event.getNpc().getName().equalsIgnoreCase("test")) {
             player.sendMessage("You've right clicked the npc " + event.getNpcName());
         }
     }
