@@ -31,7 +31,6 @@
 package de.t0bx.sentienceEntity.network.wrapper.packets;
 
 import de.t0bx.sentienceEntity.network.metadata.MetadataEntry;
-import de.t0bx.sentienceEntity.network.metadata.MetadataType;
 import de.t0bx.sentienceEntity.network.utils.PacketId;
 import de.t0bx.sentienceEntity.network.utils.PacketUtils;
 import de.t0bx.sentienceEntity.network.version.registries.PacketIdRegistry;
@@ -83,16 +82,7 @@ public class PacketSetEntityMetadata implements PacketWrapper {
             buf.writeByte(entry.index);
             PacketUtils.writeVarInt(buf, entry.type.id);
 
-            switch (entry.type) {
-                case BYTE -> MetadataType.BYTE.write(buf, entry.value);
-                case VAR_INT, POSE -> MetadataType.VAR_INT.write(buf, entry.value);
-                case FLOAT -> MetadataType.FLOAT.write(buf, entry.value);
-                case STRING -> MetadataType.STRING.write(buf, entry.value);
-                case SLOT -> MetadataType.SLOT.write(buf, entry.value);
-                case BOOLEAN -> MetadataType.BOOLEAN.write(buf, entry.value);
-                case OPTIONAL_TEXT_COMPONENT -> MetadataType.OPTIONAL_TEXT_COMPONENT.write(buf, entry.value);
-                default -> throw new UnsupportedOperationException("Unsupported metadata type: " + entry.type);
-            }
+            entry.type.write(buf, entry.value);
         }
 
         buf.writeByte(0xff);
