@@ -70,7 +70,9 @@ public final class SentienceEntity extends JavaPlugin {
     @Getter
     private static SentienceEntity instance;
 
-    private boolean PAPER;
+    @Setter
+    private boolean paper;
+
     private ConfigFileManager configFileManager;
 
     @Setter
@@ -100,15 +102,11 @@ public final class SentienceEntity extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        if (isPaperServer()) {
-            PAPER = true;
-            ChannelAccess.setRegistry(new PaperChannelAccess());
-            this.getLogger().info("SentienceEntity using PaperChannelAccess");
-        } else {
-            PAPER = false;
-            ChannelAccess.setRegistry(new SpigotChannelAccess());
-            this.getLogger().info("SentienceEntity using SpigotChannelAccess");
-        }
+        this.setPaper(isPaperServer());
+
+        ChannelAccess.setRegistry(isPaper() ? new PaperChannelAccess() : new SpigotChannelAccess());
+        String message = isPaper() ? "SentienceEntity is running on Paper!" : "SentienceEntity is running on Spigot!";
+        this.getLogger().info(message);
     }
 
     @Override
@@ -124,7 +122,7 @@ public final class SentienceEntity extends JavaPlugin {
             this.getLogger().info("bStats is disabled for SentienceEntity.");
         }
 
-        if (!isPAPER()) this.audiences = BukkitAudiences.create(this);
+        if (!isPaper()) this.audiences = BukkitAudiences.create(this);
 
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
            try {

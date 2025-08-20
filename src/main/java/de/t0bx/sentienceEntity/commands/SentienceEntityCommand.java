@@ -113,11 +113,6 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (SentienceEntity.getApi().isApiOnly()) {
-            sendMessage(player, this.miniMessage.deserialize(this.prefix + "This plugin works just as api-only!"));
-            return true;
-        }
-
         if (args.length == 0) {
             this.sendHelp(player);
             return true;
