@@ -31,7 +31,10 @@
 package de.t0bx.sentienceEntity.network.utils;
 
 import com.google.gson.*;
+import de.t0bx.sentienceEntity.network.inventory.item.ComponentItemStack;
+import de.t0bx.sentienceEntity.network.inventory.item.ItemComponent;
 import de.t0bx.sentienceEntity.network.nbt.*;
+import de.t0bx.sentienceEntity.network.version.registries.ItemIdRegistry;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.handler.codec.EncoderException;
@@ -44,6 +47,8 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -239,6 +244,16 @@ public class PacketUtils {
         } catch (Exception exception) {
             throw new EncoderException(exception);
         }
+    }
+
+    public static void writeItemStack(ByteBuf buf, ItemStack itemStack) {
+        int itemId = ItemIdRegistry.getItemId(itemStack);
+
+        PacketUtils.writeVarInt(buf, itemStack.getType() == Material.AIR ? 1 : itemStack.getAmount());
+        PacketUtils.writeVarInt(buf, itemId);
+
+        PacketUtils.writeVarInt(buf, 0);
+        PacketUtils.writeVarInt(buf, 0);
     }
 
     /**

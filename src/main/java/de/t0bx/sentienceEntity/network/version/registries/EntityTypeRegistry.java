@@ -30,60 +30,46 @@
 
 package de.t0bx.sentienceEntity.network.version.registries;
 
-import de.t0bx.sentienceEntity.network.utils.EntityType;
-import de.t0bx.sentienceEntity.network.version.ProtocolVersion;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import de.t0bx.sentienceEntity.SentienceEntity;
 import de.t0bx.sentienceEntity.network.version.VersionRegistry;
+import org.bukkit.entity.EntityType;
 
-import java.util.EnumMap;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
 public class EntityTypeRegistry {
-    private static final Map<ProtocolVersion, EnumMap<EntityType, Integer>> REGISTRY = new HashMap<>();
+    private static final Map<String, Integer> entityTypes = new HashMap<>();
 
     static {
-        var v1214 = new EnumMap<EntityType, Integer>(EntityType.class);
-        v1214.put(EntityType.ARMOR_STAND, 5);
-        v1214.put(EntityType.PLAYER, 147);
-        REGISTRY.put(ProtocolVersion.V1_21_4, v1214);
+        String version = VersionRegistry.getVersion().getVersionString();
+        InputStream inputStream = SentienceEntity.getInstance().getClass().getResourceAsStream("/registries/" + version + ".json");
+        if (inputStream == null) throw new RuntimeException("Could not find registry for version " + version);
 
-        var v1215 = cloneWithChanges(v1214, Map.of(
-               EntityType.PLAYER, 148
-        ));
-        REGISTRY.put(ProtocolVersion.V1_21_5, v1215);
+        JsonObject root = JsonParser.parseReader(new InputStreamReader(inputStream)).getAsJsonObject();
 
-        var v1216 = cloneWithChanges(v1215, Map.of(
-                EntityType.PLAYER, 149
-        ));
-        REGISTRY.put(ProtocolVersion.V1_21_6, v1216);
+        JsonObject entites = root.getAsJsonObject("minecraft:entity_type").getAsJsonObject("entries");
+        for (Map.Entry<String, JsonElement> entry : entites.entrySet()) {
+            String key = entry.getKey();
+            int id = entry.getValue().getAsJsonObject().get("protocol_id").getAsInt();
 
-        //for Protocol 771 nothing changed
-        REGISTRY.put(ProtocolVersion.V1_21_7, v1216);
-    }
-
-    /**
-     * Retrieves the numeric ID corresponding to the given {@code entityType}, based on
-     * the current {@link ProtocolVersion} of the server. This method ensures that the correct
-     * mapping of entity types to their network protocol IDs is used.
-     *
-     * @param entityType the {@link EntityType} for which the numeric ID is to be retrieved
-     * @return the numeric ID of the specified {@code entityType}, as per the current protocol version
-     * @throws IllegalArgumentException if no mapping exists for the given {@code entityType}
-     *                                  in the current protocol version
-     */
-    public static int getEntityType(EntityType entityType) {
-        ProtocolVersion version = VersionRegistry.getVersion();
-        EnumMap<EntityType, Integer> map = REGISTRY.get(version);
-        if (map == null || !map.containsKey(entityType)) {
-            throw new IllegalArgumentException("No packet mapping for entity Type " + entityType + " in version " + version);
+            entityTypes.put(key, id);
         }
-        return map.get(entityType);
     }
 
-    private static EnumMap<EntityType, Integer> cloneWithChanges(EnumMap<EntityType, Integer> base,
-                                                               Map<EntityType, Integer> changes) {
-        var clone = new EnumMap<>(base);
-        clone.putAll(changes);
-        return clone;
+    public static int getEntityTypeId(EntityType entityType) {
+        if (entityType == null) return 0;
+
+        String entityName = "minecraft:" + entityType.name().toLowerCase();
+
+        Integer id = entityTypes.get(entityName);
+        if (id != null) return id;
+
+        SentienceEntity.getInstance().getLogger().warning("Could not find entity type id for " + entityName);
+        return 0;
     }
 }

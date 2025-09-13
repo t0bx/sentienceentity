@@ -41,10 +41,15 @@ import java.util.regex.Pattern;
 @Getter
 @RequiredArgsConstructor
 public enum ProtocolVersion {
+    V1_21("1.21", 767),
+    V1_21_1("1.21.1", 767),
+    V1_21_2("1.21.2", 768),
+    V1_21_3("1.21.3", 768),
     V1_21_4("1.21.4", 769),
     V1_21_5("1.21.5", 770),
     V1_21_6("1.21.6", 771),
-    V1_21_7("1.21.7", 772);
+    V1_21_7("1.21.7", 772),
+    V1_21_8("1.21.8", 772);
 
     private final String versionString;
     private final int protocolId;
@@ -64,7 +69,7 @@ public enum ProtocolVersion {
         if (matcher.find()) {
             String serverVersion = matcher.group(1);
             for (ProtocolVersion protocolVersion : values()) {
-                if (serverVersion.contains(protocolVersion.versionString)) return protocolVersion;
+                if (serverVersion.equalsIgnoreCase(protocolVersion.versionString)) return protocolVersion;
             }
 
             Bukkit.getPluginManager().disablePlugin(SentienceEntity.getInstance());

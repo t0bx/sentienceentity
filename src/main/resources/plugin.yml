@@ -1,8 +1,18 @@
 name: SentienceEntity
-version: '1.8'
+version: '2.0.0'
 main: de.t0bx.sentienceEntity.SentienceEntity
 api-version: '1.21'
 authors: [ t0bx ]
 commands:
   se:
     permission: se.command
+    aliases:
+      - sentienceentity
+  sp:
+    permission: se.path
+    aliases:
+      - sentiencepath
+  sh:
+    permission: se.hologram
+    aliases:
+      - sentiencehologram

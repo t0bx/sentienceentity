@@ -32,16 +32,18 @@ package de.t0bx.sentienceEntity.network.utils;
 
 import de.t0bx.sentienceEntity.network.wrapper.packets.PacketPlayerInfoUpdate;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
 
-@Getter
-@AllArgsConstructor
+@Data
 public class NpcProfile {
     private final String name;
     private final int entityId;
     private final UUID uuid;
-    private final List<PacketPlayerInfoUpdate.Property> properties;
+
+    private @Nullable List<PacketPlayerInfoUpdate.Property> properties;
 }

@@ -30,18 +30,28 @@
 
 package de.t0bx.sentienceEntity.update;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Scanner;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.stream.StreamSupport;
 
 public class UpdateManager {
 
     private final JavaPlugin plugin;
+    private final String red = "\u001B[31m";
+    private final String reset = "\u001B[0m";
+    private final String green = "\u001B[32m";
+    private final String yellow = "\u001B[33m";
 
     public UpdateManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -49,14 +59,38 @@ public class UpdateManager {
 
     private void getVersion(final Consumer<String> consumer) {
         Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
-           try (InputStream inputStream = new URL("https://api.spigotmc.org/legacy/update.php?resource=124834").openStream()) {
-               Scanner scanner = new Scanner(inputStream);
-               if (scanner.hasNext()) {
-                   consumer.accept(scanner.next());
-               }
-           } catch (IOException exception) {
-               this.plugin.getLogger().warning("Failed to load update information: " + exception.getMessage());
-           }
+            try {
+                String url = "https://repository.t0bx.de/service/rest/v1/search?repository=spigotmc-releases";
+
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Accept", "application/json")
+                        .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                String json = response.body();
+
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(json);
+
+                JsonNode items = root.get("items");
+                if (!items.isArray() || items.isEmpty()) {
+                    consumer.accept("Unknown");
+                    return;
+                }
+
+                List<String> versions = StreamSupport.stream(items.spliterator(), false)
+                        .map(item -> item.path("version").asText())
+                        .toList();
+
+                String latest = versions.get(versions.size() - 1);
+
+                consumer.accept(latest);
+            } catch (IOException | InterruptedException exception) {
+                this.plugin.getLogger().log(Level.WARNING, "Error while checking for updates!", exception);
+            }
         });
     }
 
@@ -64,11 +98,16 @@ public class UpdateManager {
         this.plugin.getLogger().info("Checking for updates...");
         this.getVersion(version -> {
             String currentVersion = this.plugin.getDescription().getVersion();
-            if (!currentVersion.equals(version)) {
-                this.plugin.getLogger().info("SentienceEntity got a update (" + currentVersion + " >> " + version + ")!");
-                this.plugin.getLogger().info("Download >> https://www.spigotmc.org/resources/124834/");
+            int currentVersionId = Integer.parseInt(currentVersion.replace(".", ""));
+            int versionId = Integer.parseInt(version.replace(".", ""));
+
+            if (currentVersionId == versionId) {
+                this.plugin.getLogger().info(green + "SentienceEntity is up to date!" + reset);
+            } else if (currentVersionId < versionId) {
+                this.plugin.getLogger().info(yellow + "SentienceEntity got a update (" + currentVersion + " >> " + version + ")!" + reset);
+                this.plugin.getLogger().info(yellow + "Download >> https://www.spigotmc.org/resources/124834/" + reset);
             } else {
-                this.plugin.getLogger().info("SentienceEntity is up to date!");
+                this.plugin.getLogger().info(red + "You are running an unsupported version of SentienceEntity, note that some features may not work correctly!" + reset);
             }
         });
     }

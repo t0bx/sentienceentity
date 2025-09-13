@@ -44,7 +44,7 @@ You may use this plugin in your projects, even commercially, but you may not res
 
 ## Requirements
 
-- **Spigot/Paper 1.21.4 - 1.21.7 +**
+- **Spigot/Paper 1.21.X +**
 
 ## Commands
 
@@ -88,8 +88,8 @@ This Project uses Maven:
 ```xml
 <dependency>
     <groupId>de.t0bx</groupId>
-    <artifactId>SentienceEntity</artifactId>
-    <version>1.8</version>
+    <artifactId>sentienceentity</artifactId>
+    <version>2.0.0</version>
     <scope>provided</scope>
 </dependency>
 ```
@@ -154,7 +154,7 @@ public class NpcClickListener implements Listener {
     public void onPlayerClickNpc(PlayerClickNpcEvent event) {
         event.getInteractHand(); // Returns the Interacted Hand, MAIN_HAND, OFF_HAND or NONE
         event.getPlayer(); // The Player who interacts with the entity
-        event.getNpcName(); // The npcName which the player interacts with
+        event.getNpc(); // The npc which the player interacts with
         event.getInteractType(); // Returns the Interact Type, ATTACK, INTERACT or INTERACT_AT
 
         //Example
@@ -167,7 +167,7 @@ public class NpcClickListener implements Listener {
         //We only want right clicks on the npc
         if (event.getInteractType() != InteractType.INTERACT) return;
 
-        if (event.getNpcName().equalsIgnoreCase("test")) {
+        if (event.getNpc().getName().equalsIgnoreCase("test")) {
             player.sendMessage("You've right clicked the npc " + event.getNpcName());
         }
     }

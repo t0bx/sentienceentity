@@ -64,4 +64,20 @@ public class PacketPlayer {
     public void sendPacket(PacketWrapper packet) {
         channel.writeAndFlush(packet.build());
     }
+
+    /**
+     * Sends multiple packets to the associated player by writing each packet
+     * to the player's network channel and then flushing the channel.
+     *
+     * @param packet an array of {@link PacketWrapper} objects representing
+     *               the packets to be sent. Each packet contains the data
+     *               to be sent over the network, which is built using the
+     *               {@code build()} method.
+     */
+    public void sendMultiplePackets(PacketWrapper... packet) {
+        for (PacketWrapper packets : packet) {
+            channel.write(packets.build());
+        }
+        channel.flush();
+    }
 }

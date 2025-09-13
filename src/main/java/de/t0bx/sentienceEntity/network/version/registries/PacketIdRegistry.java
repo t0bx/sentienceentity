@@ -42,20 +42,44 @@ public class PacketIdRegistry {
     private static final Map<ProtocolVersion, EnumMap<PacketId, Integer>> REGISTRY = new HashMap<>();
 
     static {
-        var v1214 = new EnumMap<PacketId, Integer>(PacketId.class);
-        v1214.put(PacketId.PLAYER_INFO_UPDATE, 0x40);
-        v1214.put(PacketId.PLAYER_INFO_REMOVE, 0x3F);
-        v1214.put(PacketId.SPAWN_ENTITY, 0x01);
-        v1214.put(PacketId.SET_ENTITY_METADATA, 0x5D);
-        v1214.put(PacketId.SET_HEAD_ROTATION, 0x4D);
-        v1214.put(PacketId.UPDATE_ENTITY_ROTATION, 0x32);
-        v1214.put(PacketId.REMOVE_ENTITY, 0x47);
-        v1214.put(PacketId.TELEPORT_ENTITY, 0x20);
-        v1214.put(PacketId.INTERACT_ENTITY, 0x18);
-        v1214.put(PacketId.SET_PLAYER_TEAM, 0x67);
-        REGISTRY.put(ProtocolVersion.V1_21_4, v1214);
+        var v1_21 = new EnumMap<PacketId, Integer>(PacketId.class);
+        v1_21.put(PacketId.PLAYER_INFO_UPDATE, 0x3E);
+        v1_21.put(PacketId.PLAYER_INFO_REMOVE, 0x3D);
+        v1_21.put(PacketId.SPAWN_ENTITY, 0x01);
+        v1_21.put(PacketId.SET_ENTITY_METADATA, 0x58);
+        v1_21.put(PacketId.SET_HEAD_ROTATION, 0x48);
+        v1_21.put(PacketId.UPDATE_ENTITY_ROTATION, 0x30);
+        v1_21.put(PacketId.REMOVE_ENTITY, 0x42);
+        v1_21.put(PacketId.TELEPORT_ENTITY, 0x70);
+        v1_21.put(PacketId.INTERACT_ENTITY, 0x16);
+        v1_21.put(PacketId.SET_PLAYER_TEAM, 0x60);
+        v1_21.put(PacketId.SET_EQUIPMENT, 0x5B);
+        REGISTRY.put(ProtocolVersion.V1_21, v1_21);
 
-        var v1215 = cloneWithChanges(v1214, Map.of(
+        //No Changes from v1_21 -> v1_21_1
+        REGISTRY.put(ProtocolVersion.V1_21_1, v1_21);
+
+        var v1_21_2 = cloneWithChanges(v1_21, Map.of(
+                PacketId.PLAYER_INFO_UPDATE, 0x40,
+                PacketId.PLAYER_INFO_REMOVE, 0x3F,
+                PacketId.SET_ENTITY_METADATA, 0x5D,
+                PacketId.SET_HEAD_ROTATION, 0x4D,
+                PacketId.UPDATE_ENTITY_ROTATION, 0x32,
+                PacketId.REMOVE_ENTITY, 0x47,
+                PacketId.TELEPORT_ENTITY, 0x20,
+                PacketId.INTERACT_ENTITY, 0x18,
+                PacketId.SET_PLAYER_TEAM, 0x67,
+                PacketId.SET_EQUIPMENT, 0x60
+        ));
+        REGISTRY.put(ProtocolVersion.V1_21_2, v1_21_2);
+
+        //No Changes from v1_21_2 -> v1_21_3
+        REGISTRY.put(ProtocolVersion.V1_21_3, v1_21_2);
+
+        //No Changes from v1_21_3 -> v1_21_4
+        REGISTRY.put(ProtocolVersion.V1_21_4, v1_21_2);
+
+        var v1_21_5 = cloneWithChanges(v1_21_2, Map.of(
                 PacketId.PLAYER_INFO_UPDATE, 0x3F,
                 PacketId.PLAYER_INFO_REMOVE, 0x3E,
                 PacketId.SET_ENTITY_METADATA, 0x5C,
@@ -63,17 +87,21 @@ public class PacketIdRegistry {
                 PacketId.UPDATE_ENTITY_ROTATION, 0x31,
                 PacketId.REMOVE_ENTITY, 0x46,
                 PacketId.TELEPORT_ENTITY, 0x1F,
-                PacketId.SET_PLAYER_TEAM, 0x66
+                PacketId.SET_PLAYER_TEAM, 0x66,
+                PacketId.SET_EQUIPMENT, 0x5F
         ));
-        REGISTRY.put(ProtocolVersion.V1_21_5, v1215);
+        REGISTRY.put(ProtocolVersion.V1_21_5, v1_21_5);
 
-        var v1216 = cloneWithChanges(v1215, Map.of(
+        var v1_21_6 = cloneWithChanges(v1_21_5, Map.of(
                 PacketId.INTERACT_ENTITY, 0x19
         ));
-        REGISTRY.put(ProtocolVersion.V1_21_6, v1216);
+        REGISTRY.put(ProtocolVersion.V1_21_6, v1_21_6);
 
         // No changes for 1_21_7 from 1_21_6
-        REGISTRY.put(ProtocolVersion.V1_21_7, v1216);
+        REGISTRY.put(ProtocolVersion.V1_21_7, v1_21_6);
+
+        // No changes for 1_21_8 from 1_21_6
+        REGISTRY.put(ProtocolVersion.V1_21_8, v1_21_6);
     }
 
     /**
