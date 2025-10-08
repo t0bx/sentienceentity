@@ -107,6 +107,12 @@
             "width": 0.5
         }
     },
+    "copper_golem": {
+        "single": {
+            "height": 0.98,
+            "width": 0.49
+        }
+    },
     "cow": {
         "adult": {
             "height": 1.3,
