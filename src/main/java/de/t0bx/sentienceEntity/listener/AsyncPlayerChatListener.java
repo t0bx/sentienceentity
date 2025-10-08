@@ -7,7 +7,6 @@ import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -40,7 +39,7 @@ public class AsyncPlayerChatListener implements Listener {
             case NAME -> {
                 String name = miniMessage.serialize(event.message());
                 builder.setName(name);
-                sendMessage(player, miniMessage.deserialize(prefix + "Name set to: <white>" + name));
+                sendMessage(player, miniMessage.deserialize(prefix + "<red>Name set to: <white>" + name));
 
                 Bukkit.getScheduler().runTask(SentienceEntity.getInstance(), () -> this.npcCreation.openInventory(player, 0));
                 builder.nextStep();
@@ -51,8 +50,8 @@ public class AsyncPlayerChatListener implements Listener {
                 builder.setPlayerName(name);
                 builder.nextStep();
 
-                sendMessage(player, miniMessage.deserialize(prefix + "Player name set to: <white>" + name));
-                sendMessage(player, miniMessage.deserialize(prefix + "Should this npc only be visible with a certain permission? (Type <red>none <gray>for no permission)"));
+                sendMessage(player, miniMessage.deserialize(prefix + "<red>Player name set to: <white>" + name));
+                sendMessage(player, miniMessage.deserialize(prefix + "<red>Should this npc only be visible with a certain permission? (Type <b>none</b> <red>for no permission)"));
             }
 
             case PERMISSION -> {

@@ -49,7 +49,8 @@ public enum ProtocolVersion {
     V1_21_5("1.21.5", 770),
     V1_21_6("1.21.6", 771),
     V1_21_7("1.21.7", 772),
-    V1_21_8("1.21.8", 772);
+    V1_21_8("1.21.8", 772),
+    V1_21_9("1.21.9", 773);
 
     private final String versionString;
     private final int protocolId;
@@ -73,7 +74,7 @@ public enum ProtocolVersion {
             }
 
             Bukkit.getPluginManager().disablePlugin(SentienceEntity.getInstance());
-            throw new IllegalStateException("SentienceEntity doesn't support Version: " + serverVersion);
+            throw new UnsupportedOperationException("SentienceEntity doesn't support Version: " + serverVersion);
         }
 
         return null;

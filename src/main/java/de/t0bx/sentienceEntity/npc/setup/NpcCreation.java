@@ -5,7 +5,6 @@ import de.t0bx.sentienceEntity.network.version.registries.ItemIdRegistry;
 import de.t0bx.sentienceEntity.utils.item.ItemProvider;
 import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -92,14 +91,13 @@ public class NpcCreation {
         private @Nullable String permission;
         private SetupStep step = SetupStep.NAME;
 
-        public SetupStep nextStep() {
-            return switch (step) {
+        public void nextStep() {
+            switch (step) {
                 case NAME -> step = SetupStep.ENTITY_TYPE;
                 case ENTITY_TYPE -> step = SetupStep.PLAYER_NAME;
                 case PLAYER_NAME -> step = SetupStep.PERMISSION;
                 case PERMISSION -> step = SetupStep.DONE;
-                default -> SetupStep.DONE;
-            };
+            }
         }
     }
 

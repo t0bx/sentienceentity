@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 public class MessageUtils {
 
     public static void sendMessage(Player player, Component component) {
-        if (SentienceEntity.getInstance().isPAPER()) {
+        if (SentienceEntity.getInstance().isPaper()) {
             player.sendMessage(component);
         } else {
             SentienceEntity.getInstance().getAudiences().player(player).sendMessage(component);

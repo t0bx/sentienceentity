@@ -402,8 +402,6 @@ public record SentiencePathExecutor(int entityId, SentiencePath path) {
         return Collections.emptyList();
     }
 
-
-
     /**
      * Reconstructs the path from an end node by tracing its parent nodes
      * back to the start and converting each node to a location within the given world.

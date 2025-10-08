@@ -159,6 +159,21 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
                 this.handleInspect(player);
             }
 
+            case "cancel" -> {
+                if (args.length != 1) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se cancel <dark_gray>| <gray>Cancel your current NPC-Creation"));
+                    return true;
+                }
+
+                if (!this.npcCreation.isNpcCreation(player)) {
+                    sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red>You currently aren't creating a NPC."));
+                    return true;
+                }
+
+                this.npcCreation.removeCreationBuilder(player);
+                sendMessage(player, this.miniMessage.deserialize(this.prefix + "<green>NPC creation has been cancelled."));
+            }
+
             default -> this.sendHelp(player);
         }
         return false;
@@ -167,11 +182,12 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
     private void handleSpawnNpc(Player player) {
         if (this.npcCreation.isNpcCreation(player)) {
             sendMessage(player, this.miniMessage.deserialize(this.prefix + "You can't spawn npcs while you are creating one!"));
+            sendMessage(player, this.miniMessage.deserialize(this.prefix + "Use /se cancel to cancel your current NPC-Creation."));
             return;
         }
 
         this.npcCreation.addCreationBuilder(player);
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Please type in the name of the npc you want to create!"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "<red><b>Please type in the name in the chat of the npc you want to create!"));
     }
 
     private void handleEditNpc(Player player, @NotNull String[] args) {
@@ -397,11 +413,12 @@ public class SentienceEntityCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(Player player) {
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "NPC-Management: "));
-        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se spawnnpc <Name> <Player Name> <dark_gray>| <gray>Spawn a new npc"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se spawnnpc <dark_gray>| <gray>Spawn a new npc"));
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se editnpc <Name> <dark_gray>| <gray>Edit a npc"));
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se removenpc <Name> <dark_gray>| <gray>Removes a npc"));
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se listnpc <dark_gray>| <gray>List all npcs"));
         sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se inspect <dark_gray>| <gray>Enter Inspector Mode"));
+        sendMessage(player, this.miniMessage.deserialize(this.prefix + "Usage: /se cancel <dark_gray>| <gray>Cancel your current NPC-Creation"));
     }
 
     @Override
