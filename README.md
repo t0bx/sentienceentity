@@ -2,35 +2,7 @@
 
 A powerful Minecraft plugin that adds interactive NPCs with advanced features to your Minecraft server.
 
-## License
-
-SentienceEntity API License v1.1
-Copyright (c) 2025 (t0bx)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use, copy, modify, and integrate the Software into their own projects, including commercial and closed-source projects, subject to the following conditions:
-
-1. Attribution:
-   You must give appropriate credit to the original author ("Tobias Schuster" or "t0bx"), provide a link to the source or official page if available, and indicate if changes were made. You must do so in a reasonable and visible manner, such as in your plugin.yml, README, or about page.
-
-2. No Redistribution or Resale:
-   You may NOT sell, redistribute, or otherwise make the original Software or modified standalone versions of it available as a product (free or paid), plugin, or downloadable file, unless you have received prior written permission from the author. This includes publishing the plugin on any marketplace (e.g., SpigotMC, MC-Market, Polymart) or including it in paid bundles.
-
-3. Use as Dependency/API:
-   You are allowed to use this Software as a dependency or library in your own plugin or project, including in paid products, as long as attribution is given and the Software itself is not being sold or published separately.
-
-4. No Misrepresentation:
-   You may not misrepresent the origin of the Software. You must clearly distinguish your own modifications from the original work. The original author's name may not be removed from the source files or documentation.
-
-5. License Retention:
-   This license notice and all conditions must be preserved in all copies or substantial portions of the Software.
-
-6. Disclaimer:
-   THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
-
- ---
-
-Summary (non-binding):
-You may use this plugin in your projects, even commercially, but you may not resell or republish it. Always give credit to t0bx.
+## [License](https://github.com/t0bx/sentienceentity?tab=License-1-ov-file)
 
 ## Features
 
@@ -48,25 +20,60 @@ You may use this plugin in your projects, even commercially, but you may not res
 
 ## Commands
 
-| Command                             | Description | Permission |
-|-------------------------------------|-------------|------------|
-| `/se`                               | Main command for SentienceEntity | `se.command` |
-| `/se spawnnpc <Name> <Player Name>` | Spawn a new npc | `se.command` |
-| `/se editnpc <Name>`                | Edit a npc | `se.command` |
-| `/se removenpc <Name>`              | Removes a npc | `se.command` |
-| `/se listnpc`                       | List all npcs | `se.command` |
-| `/se createHologram <Name>`         | Create a Hologram for a npc | `se.command` |
-| `/se addLine <Name> <Text>`         | Add a line for a hologram | `se.command` |
-| `/se setLine <Name> <index> <Text>` | Updates a specific line from a hologram | `se.command` |
-| `/se lines <Name>`                  | List all lines from a hologram | `se.command` |
-| `/se removeLine <Name> <index>`     | Removes a specific line from a hologram | `se.command` |
-| `/se removeHologram <Name>`         | Removes a hologram | `se.command` |
+### NPC Management (`/se` or `/sentienceentity`)
+
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/se spawnnpc <Name> <Player Name>` | Spawn a new NPC | `se.command` |
+| `/se editnpc <Name> <option>` | Edit an NPC (see options below) | `se.command` |
+| `/se removenpc <Name>` | Remove an NPC | `se.command` |
+| `/se listnpc` | List all spawned NPCs | `se.command` |
+| `/se inspect` | Enter inspector mode (left-click NPC for info, right-click hologram for info) | `se.command` |
+| `/se cancel` | Cancel current NPC creation | `se.command` |
+
+**Edit NPC Options:**
+- `shouldLookAtPlayer` - Toggle if NPC looks at players
+- `shouldSneakWithPlayer` - Toggle if player NPC sneaks with players
+- `updateLocation` - Update NPC location to your current location
+- `setSkin <Player Name>` - Set NPC skin (player NPCs only)
+- `setItem <Slot>` - Set equipment item (Slots: mainhand, offhand, boots, leggings, chestplate, helmet)
+- `removeItem <Slot>` - Remove equipment from NPC
+- `setPermission <Permission>` - Set visibility permission (use "none" for no permission)
+- `setPath <Path Name>` - Bind a path to the NPC
+
+### Path Management (`/sp` or `/sentiencepath`)
+
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/sp create <pathname> <Trigger-Type>` | Create a new path (Trigger types: LOOP, INTERACT) | `se.path` |
+| `/sp remove <pathname>` | Remove a path | `se.path` |
+| `/sp addPoint <pathname> <walk/teleport>` | Add a waypoint to a path | `se.path` |
+| `/sp removePoint <pathname> <point index>` | Remove a waypoint from a path | `se.path` |
+| `/sp listPoints <pathname>` | List all waypoints in a path | `se.path` |
+| `/sp list` | List all created paths | `se.path` |
+| `/sp apply <pathname> <npcname>` | Apply a path to an NPC | `se.path` |
+| `/sp setTrigger <pathname> <Trigger Type>` | Change path trigger type | `se.path` |
+
+### Hologram Management (`/sh` or `/sentiencehologram`)
+
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/sh createHologram <NPC Name>` | Create a hologram for an NPC | `se.hologram` |
+| `/sh addTextLine <NPC Name> <Text>` | Add a text line to hologram | `se.hologram` |
+| `/sh addItemLine <NPC Name>` | Add an item line to hologram (hold item in hand) | `se.hologram` |
+| `/sh setTextLine <NPC Name> <index> <Text>` | Update a text line | `se.hologram` |
+| `/sh setItemLine <NPC Name> <index>` | Update an item line (hold item in hand) | `se.hologram` |
+| `/sh lines <NPC Name>` | List all lines in a hologram | `se.hologram` |
+| `/sh removeLine <NPC Name> <index>` | Remove a specific line from hologram | `se.hologram` |
+| `/sh removeHologram <NPC Name>` | Remove entire hologram | `se.hologram` |
 
 ## Permissions
 
 | Permission | Description |
 |------------|-------------|
-| `se.command` | Allows access to the main plugin command |
+| `se.command` | Allows access to NPC management commands |
+| `se.path` | Allows access to path management commands |
+| `se.hologram` | Allows access to hologram management commands |
 
 ## Installation
 
