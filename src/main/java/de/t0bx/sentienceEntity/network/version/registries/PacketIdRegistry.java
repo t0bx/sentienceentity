@@ -103,8 +103,21 @@ public class PacketIdRegistry {
         // No changes for 1_21_8 from 1_21_6
         REGISTRY.put(ProtocolVersion.V1_21_8, v1_21_6);
 
-        // No changes for 1_21_9 from 1_21_6
-        REGISTRY.put(ProtocolVersion.V1_21_9, v1_21_6);
+        var v1_21_9 = cloneWithChanges(v1_21_6, Map.of(
+                PacketId.PLAYER_INFO_UPDATE, 0x44,
+                PacketId.PLAYER_INFO_REMOVE, 0x43,
+                PacketId.SET_ENTITY_METADATA, 0x61,
+                PacketId.SET_HEAD_ROTATION, 0x51,
+                PacketId.UPDATE_ENTITY_ROTATION, 0x36,
+                PacketId.REMOVE_ENTITY, 0x4B,
+                PacketId.TELEPORT_ENTITY, 0x23,
+                PacketId.SET_PLAYER_TEAM, 0x6B,
+                PacketId.SET_EQUIPMENT, 0x64
+        ));
+        REGISTRY.put(ProtocolVersion.V1_21_9, v1_21_9);
+
+        //No changes for 1_21_10 from 1_21_9
+        REGISTRY.put(ProtocolVersion.V1_21_10, v1_21_9);
     }
 
     /**

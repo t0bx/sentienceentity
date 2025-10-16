@@ -50,7 +50,8 @@ public enum ProtocolVersion {
     V1_21_6("1.21.6", 771),
     V1_21_7("1.21.7", 772),
     V1_21_8("1.21.8", 772),
-    V1_21_9("1.21.9", 773);
+    V1_21_9("1.21.9", 773),
+    V1_21_10("1.21.10", 773);
 
     private final String versionString;
     private final int protocolId;
